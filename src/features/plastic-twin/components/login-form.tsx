@@ -28,33 +28,36 @@ import { cn } from "@/lib/utils";
 
 const roleOptions = [
   {
+    value: "student",
     label: "Student",
     description: "Access campus data and report waste",
     icon: GraduationCap,
-    active: true,
   },
   {
+    value: "admin",
     label: "Admin",
     description: "Manage system, users, and configurations",
     icon: ShieldCheck,
-    active: false,
   },
   {
+    value: "officer",
     label: "Waste Management Officer",
     description: "Manage waste data and operations",
     icon: Trash2,
-    active: false,
   },
   {
+    value: "researcher",
     label: "Researcher",
     description: "Access data for research and analysis",
     icon: Recycle,
-    active: false,
   },
 ];
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = React.useState(false);
+  const [role, setRole] = React.useState("student");
+  const selectedRole =
+    roleOptions.find((roleOption) => roleOption.value === role) ?? roleOptions[0];
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -117,49 +120,47 @@ export function LoginForm() {
 
         <div className="grid gap-2">
           <label className="text-sm font-semibold text-slate-800">Role</label>
-          <Select defaultValue="student">
+          <Select value={role} onValueChange={setRole}>
             <SelectTrigger className="h-12 border-emerald-400">
               <div className="flex items-center gap-3">
                 <Users className="size-5 text-muted-foreground" />
-                <SelectValue placeholder="Select your role" />
+                <SelectValue placeholder="Select your role">
+                  {selectedRole.label}
+                </SelectValue>
               </div>
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="student">Student</SelectItem>
-              <SelectItem value="admin">Admin</SelectItem>
-              <SelectItem value="officer">Waste Management Officer</SelectItem>
-              <SelectItem value="researcher">Researcher</SelectItem>
+            <SelectContent className="w-[var(--radix-select-trigger-width)] p-0">
+              {roleOptions.map((roleOption) => {
+                const Icon = roleOption.icon;
+                const selected = roleOption.value === role;
+
+                return (
+                  <SelectItem
+                    className={cn(
+                      "rounded-none py-3 pl-3 pr-4 focus:bg-emerald-50",
+                      selected && "bg-emerald-50",
+                    )}
+                    key={roleOption.value}
+                    value={roleOption.value}
+                  >
+                    <span className="flex items-center gap-3">
+                      <span className="grid size-10 place-items-center rounded-full bg-emerald-50 text-emerald-700">
+                        <Icon className="size-5" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-sm font-bold text-slate-900">
+                          {roleOption.label}
+                        </span>
+                        <span className="block whitespace-normal text-xs text-muted-foreground">
+                          {roleOption.description}
+                        </span>
+                      </span>
+                    </span>
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
-
-          <div className="overflow-hidden rounded-lg border border-emerald-400 bg-white">
-            {roleOptions.map((role) => {
-              const Icon = role.icon;
-
-              return (
-                <button
-                  className={cn(
-                    "flex w-full items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-emerald-50",
-                    role.active && "bg-emerald-50",
-                  )}
-                  key={role.label}
-                  type="button"
-                >
-                  <span className="grid size-10 place-items-center rounded-full bg-emerald-50 text-emerald-700">
-                    <Icon className="size-5" />
-                  </span>
-                  <span>
-                    <span className="block text-sm font-bold text-slate-900">
-                      {role.label}
-                    </span>
-                    <span className="block text-xs text-muted-foreground">
-                      {role.description}
-                    </span>
-                  </span>
-                </button>
-              );
-            })}
-          </div>
         </div>
 
         <Button className="h-12 w-full text-base" type="submit">

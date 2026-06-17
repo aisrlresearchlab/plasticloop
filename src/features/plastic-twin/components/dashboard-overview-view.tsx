@@ -1,3 +1,6 @@
+"use client";
+
+import * as React from "react";
 import { ChevronDown } from "lucide-react";
 
 import { AppShell } from "@/components/layout/app-shell";
@@ -17,7 +20,6 @@ import { MapView } from "@/features/plastic-twin/components/map-view";
 import {
   MetricCard,
   PanelCard,
-  SectionActionLink,
 } from "@/features/plastic-twin/components/shared-widgets";
 import { toneStyles } from "@/features/plastic-twin/components/tone";
 import {
@@ -30,6 +32,24 @@ import {
 import { cn } from "@/lib/utils";
 
 export function DashboardOverviewView() {
+  const [range, setRange] = React.useState("7");
+  const [showAllActivity, setShowAllActivity] = React.useState(false);
+  const trendScale = range === "14" ? 1.08 : range === "30" ? 1.18 : 1;
+  const adjustedTrend = wasteTrend.map((point, index) => ({
+    ...point,
+    value: Math.round(point.value * trendScale + index * Number(range)),
+  }));
+  const visibleActivity = showAllActivity
+    ? [
+        ...recentActivity,
+        ...recentActivity.map((activity) => ({
+          ...activity,
+          title: `${activity.title} (Earlier)`,
+          time: "08:10 AM",
+        })),
+      ]
+    : recentActivity;
+
   return (
     <AppShell
       activeKey="dashboard"
@@ -50,7 +70,7 @@ export function DashboardOverviewView() {
         <section className="grid gap-5 xl:grid-cols-[1.05fr_0.75fr_1.45fr]">
           <PanelCard
             action={
-              <Select defaultValue="7">
+              <Select value={range} onValueChange={setRange}>
                 <SelectTrigger className="h-8 w-28">
                   <SelectValue />
                 </SelectTrigger>
@@ -63,7 +83,7 @@ export function DashboardOverviewView() {
             }
             title="Plastic Waste Trend"
           >
-            <AreaTrendChart data={wasteTrend} />
+            <AreaTrendChart data={adjustedTrend} />
           </PanelCard>
 
           <PanelCard title="Waste by Location (Today)">
@@ -89,13 +109,25 @@ export function DashboardOverviewView() {
             <DonutChartView data={plasticTypeSegments} />
           </PanelCard>
 
-          <PanelCard action={<SectionActionLink>View All</SectionActionLink>} title="Recent Activity">
+          <PanelCard
+            action={
+              <Button
+                className="h-8 px-2 text-xs text-emerald-700"
+                onClick={() => setShowAllActivity((value) => !value)}
+                type="button"
+                variant="ghost"
+              >
+                {showAllActivity ? "Show Less" : "View All"}
+              </Button>
+            }
+            title="Recent Activity"
+          >
             <div className="space-y-4">
-              {recentActivity.map((activity) => {
+              {visibleActivity.map((activity, index) => {
                 const Icon = activity.icon;
 
                 return (
-                  <div className="flex items-start gap-4" key={activity.title}>
+                  <div className="flex items-start gap-4" key={`${activity.title}-${index}`}>
                     <span
                       className={cn(
                         "grid size-10 shrink-0 place-items-center rounded-full",

@@ -1,3 +1,6 @@
+"use client";
+
+import * as React from "react";
 import {
   CalendarDays,
   Cloud,
@@ -74,6 +77,8 @@ const reportSummary: StatMetric[] = [
 ];
 
 export function ReportsView() {
+  const [reportStatus, setReportStatus] = React.useState("Ready to generate");
+
   return (
     <AppShell
       activeKey="reports"
@@ -115,18 +120,35 @@ export function ReportsView() {
               </div>
             </div>
             <div className="grid content-center gap-3">
-              <Button className="h-12">
+              <Button
+                className="h-12"
+                onClick={() => setReportStatus("PDF report generated with dummy data.")}
+                type="button"
+              >
                 <Download className="size-5" />
                 Download PDF
               </Button>
-              <Button className="h-12" variant="outline">
+              <Button
+                className="h-12"
+                onClick={() => setReportStatus("Excel export prepared with dummy data.")}
+                type="button"
+                variant="outline"
+              >
                 <FileSpreadsheet className="size-5" />
                 Export Excel
               </Button>
-              <Button className="h-12" variant="outline">
+              <Button
+                className="h-12"
+                onClick={() => setReportStatus("Report sent to Admin queue.")}
+                type="button"
+                variant="outline"
+              >
                 <Send className="size-5" />
                 Send to Admin
               </Button>
+              <p className="rounded-md bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
+                {reportStatus}
+              </p>
             </div>
           </div>
         </Card>

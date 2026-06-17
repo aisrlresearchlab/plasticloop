@@ -9,8 +9,8 @@ import { cn } from "@/lib/utils";
 
 const InteractiveCampusMap = dynamic(
   () =>
-    import("@/features/plastic-twin/components/interactive-campus-map").then(
-      (module) => module.InteractiveCampusMap,
+    import("@/features/plastic-twin/components/mapcn-campus-map").then(
+      (module) => module.MapcnCampusMap,
     ),
   {
     ssr: false,

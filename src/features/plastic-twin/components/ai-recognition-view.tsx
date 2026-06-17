@@ -1,4 +1,17 @@
-import { Camera, Image as ImageIcon, Recycle } from "lucide-react";
+"use client";
+
+import * as React from "react";
+import Image from "next/image";
+import {
+  Archive,
+  Camera,
+  CheckCircle2,
+  Image as ImageIcon,
+  LineChart,
+  PackageCheck,
+  Recycle,
+  Sparkles,
+} from "lucide-react";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { Badge } from "@/components/ui/badge";
@@ -10,13 +23,177 @@ import {
   PanelCard,
   TipBar,
 } from "@/features/plastic-twin/components/shared-widgets";
-import {
-  aiRecentScans,
-  recognitionDetails,
-} from "@/features/plastic-twin/data/plastic-twin-data";
+import { aiRecentScans } from "@/features/plastic-twin/data/plastic-twin-data";
+import { recognizePlasticRequest } from "@/features/plastic-twin/services/recognize-plastic-request";
+import type { AiRecognitionResult } from "@/features/plastic-twin/types";
 import { cn } from "@/lib/utils";
 
+const fallbackResult: AiRecognitionResult = {
+  plasticType: "PET Bottle",
+  material: "Polyethylene Terephthalate",
+  confidence: 94.8,
+  recyclability: "High",
+  estimatedPurity: "Clean",
+  suggestedBin: "Recyclable Plastic",
+  environmentalImpact:
+    "Recycling this PET bottle helps reduce CO2 emissions and supports a circular economy.",
+};
+
+function readFileAsBase64(file: File): Promise<{
+  imageBase64: string;
+  dataUrl: string;
+}> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      if (typeof reader.result !== "string") {
+        reject(new Error("Failed to read image file."));
+        return;
+      }
+
+      const [, base64 = ""] = reader.result.split(",");
+      resolve({
+        imageBase64: base64,
+        dataUrl: reader.result,
+      });
+    };
+    reader.onerror = () => reject(new Error("Failed to read image file."));
+    reader.readAsDataURL(file);
+  });
+}
+
 export function AiRecognitionView() {
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const cameraInputRef = React.useRef<HTMLInputElement>(null);
+  const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
+  const [result, setResult] = React.useState<AiRecognitionResult>(fallbackResult);
+  const [isAnalyzing, setIsAnalyzing] = React.useState(false);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = React.useState<string | null>(null);
+  const [isDragging, setIsDragging] = React.useState(false);
+  const [lastSource, setLastSource] = React.useState<"upload" | "camera" | null>(
+    null,
+  );
+
+  const confidence = Number.isFinite(result.confidence)
+    ? Math.round(result.confidence * 10) / 10
+    : 0;
+
+  const details = [
+    {
+      label: "Plastic Type",
+      value: result.plasticType,
+      icon: PackageCheck,
+      tone: "blue" as const,
+    },
+    {
+      label: "Material",
+      value: result.material,
+      icon: Archive,
+      tone: "purple" as const,
+    },
+    {
+      label: "Confidence",
+      value: `${confidence}%`,
+      icon: LineChart,
+      tone: "green" as const,
+    },
+    {
+      label: "Recyclability",
+      value: result.recyclability,
+      icon: Recycle,
+      tone: "green" as const,
+    },
+    {
+      label: "Estimated Purity",
+      value: result.estimatedPurity,
+      icon: Sparkles,
+      tone: "green" as const,
+    },
+  ];
+
+  async function handleImageFile(file: File, source: "upload" | "camera") {
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setErrorMessage("Format gambar harus JPG, PNG, atau WebP.");
+      setSuccessMessage(null);
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setErrorMessage("Ukuran gambar maksimal 10MB.");
+      setSuccessMessage(null);
+      return;
+    }
+
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    setIsAnalyzing(true);
+    setLastSource(source);
+
+    try {
+      const image = await readFileAsBase64(file);
+      setPreviewUrl(image.dataUrl);
+
+      const prediction = await recognizePlasticRequest({
+        imageBase64: image.imageBase64,
+        mimeType: file.type,
+      });
+
+      setResult(prediction);
+      setSuccessMessage("Gemini berhasil mendeteksi jenis plastik dari gambar.");
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Failed to analyze image with Gemini.",
+      );
+    } finally {
+      setIsAnalyzing(false);
+    }
+  }
+
+  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+
+    if (file) {
+      void handleImageFile(file, "upload");
+    }
+
+    event.target.value = "";
+  }
+
+  function handleCameraChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+
+    if (file) {
+      void handleImageFile(file, "camera");
+    }
+
+    event.target.value = "";
+  }
+
+  function handleDragOver(event: React.DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setIsDragging(true);
+  }
+
+  function handleDragLeave(event: React.DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setIsDragging(false);
+  }
+
+  function handleDrop(event: React.DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setIsDragging(false);
+
+    const file = event.dataTransfer.files[0];
+
+    if (file) {
+      void handleImageFile(file, "upload");
+    }
+  }
+
   return (
     <AppShell
       activeKey="ai-recognition"
@@ -27,17 +204,58 @@ export function AiRecognitionView() {
         <section className="grid gap-5 xl:grid-cols-[0.95fr_0.82fr_0.65fr]">
           <div className="grid gap-5">
             <PanelCard title="1. Upload or Capture Image">
-              <div className="grid min-h-64 place-items-center rounded-lg border border-dashed border-emerald-400 bg-emerald-50/20 p-8 text-center">
+              <input
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={handleFileChange}
+                ref={fileInputRef}
+                type="file"
+              />
+              <input
+                accept="image/jpeg,image/png,image/webp"
+                capture="environment"
+                className="hidden"
+                onChange={handleCameraChange}
+                ref={cameraInputRef}
+                type="file"
+              />
+              <div
+                className={cn(
+                  "grid min-h-64 place-items-center rounded-lg border border-dashed border-emerald-400 bg-emerald-50/20 p-8 text-center transition-colors",
+                  isDragging && "border-emerald-700 bg-emerald-100/70",
+                )}
+                onDragLeave={handleDragLeave}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+              >
                 <div>
                   <ImageIcon className="mx-auto size-14 text-emerald-700" />
                   <p className="mt-5 text-base font-medium text-slate-800">
                     Drag and drop an image here
                   </p>
                   <p className="mt-2 text-sm text-muted-foreground">or</p>
-                  <Button className="mt-4">Browse Files</Button>
+                  <Button
+                    className="mt-4"
+                    disabled={isAnalyzing}
+                    onClick={() => fileInputRef.current?.click()}
+                    type="button"
+                  >
+                    {isAnalyzing ? "Analyzing..." : "Browse Files"}
+                  </Button>
                   <p className="mt-4 text-xs text-muted-foreground">
                     JPG, PNG, WebP (Max. 10MB)
                   </p>
+                  {errorMessage ? (
+                    <p className="mt-4 rounded-md bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+                      {errorMessage}
+                    </p>
+                  ) : null}
+                  {successMessage ? (
+                    <p className="mt-4 inline-flex items-center gap-2 rounded-md bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
+                      <CheckCircle2 className="size-4" />
+                      {successMessage}
+                    </p>
+                  ) : null}
                 </div>
               </div>
 
@@ -51,10 +269,15 @@ export function AiRecognitionView() {
                 <p className="mb-3 font-semibold text-slate-900">Take a Photo</p>
                 <Button
                   className="h-24 w-full flex-col gap-2 border-emerald-200 bg-emerald-50/20 text-slate-800 hover:bg-emerald-50"
+                  disabled={isAnalyzing}
+                  onClick={() => cameraInputRef.current?.click()}
+                  type="button"
                   variant="outline"
                 >
                   <Camera className="size-10 text-emerald-700" />
-                  Open Camera
+                  {isAnalyzing && lastSource === "camera"
+                    ? "Analyzing Photo..."
+                    : "Open Camera"}
                 </Button>
               </div>
             </PanelCard>
@@ -94,16 +317,32 @@ export function AiRecognitionView() {
           </div>
 
           <PanelCard title="2. AI Prediction Result">
-            <BottleVisual />
+            {previewUrl ? (
+              <div className="relative grid min-h-[480px] place-items-center overflow-hidden rounded-lg bg-slate-100">
+                <Image
+                  alt="Uploaded plastic waste preview"
+                  className="h-full max-h-[520px] w-full object-cover"
+                  height={520}
+                  unoptimized
+                  src={previewUrl}
+                  width={720}
+                />
+                <Badge className="absolute bottom-8 left-1/2 -translate-x-1/2" variant="success">
+                  Gemini Analysis
+                </Badge>
+              </div>
+            ) : (
+              <BottleVisual />
+            )}
             <div className="mt-8 text-center">
               <h2 className="text-4xl font-bold tracking-normal text-slate-950">
-                PET Bottle
+                {result.plasticType}
               </h2>
               <p className="mt-2 text-lg font-medium text-slate-700">
-                (Polyethylene Terephthalate)
+                ({result.material})
               </p>
               <div className="mx-auto mt-6 max-w-sm rounded-lg border border-emerald-100 bg-emerald-50/60 p-6">
-                <p className="text-5xl font-bold text-emerald-700">94.8%</p>
+                <p className="text-5xl font-bold text-emerald-700">{confidence}%</p>
                 <p className="mt-2 text-base font-medium text-slate-700">
                   Confidence Score
                 </p>
@@ -114,7 +353,7 @@ export function AiRecognitionView() {
           <div className="grid content-start gap-5">
             <PanelCard title="Prediction Details">
               <div className="space-y-5">
-                {recognitionDetails.map((detail) => (
+                {details.map((detail) => (
                   <div className="flex items-center gap-4" key={detail.label}>
                     <IconBubble icon={detail.icon} tone={detail.tone} />
                     <div>
@@ -133,10 +372,10 @@ export function AiRecognitionView() {
                 </div>
                 <div>
                   <p className="text-xl font-bold text-emerald-700">
-                    Recyclable Plastic
+                    {result.suggestedBin}
                   </p>
                   <p className="mt-3 text-sm leading-6 text-slate-700">
-                    Please dispose of this item in the Recyclable Plastic bin.
+                    Please dispose of this item in the {result.suggestedBin} bin.
                   </p>
                 </div>
               </div>
@@ -150,8 +389,7 @@ export function AiRecognitionView() {
                     Environmental Impact
                   </p>
                   <p className="mt-3 text-sm leading-7 text-slate-700">
-                    Recycling this PET bottle helps reduce CO2 emissions and
-                    supports a circular economy.
+                    {result.environmentalImpact}
                   </p>
                   <Badge className="mt-4" variant="success">
                     High value recyclable

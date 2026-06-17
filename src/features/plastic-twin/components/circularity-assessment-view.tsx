@@ -1,3 +1,6 @@
+"use client";
+
+import * as React from "react";
 import {
   CalendarDays,
   Download,
@@ -57,6 +60,8 @@ const scoreInterpretations = [
 ];
 
 export function CircularityAssessmentView() {
+  const [exportStatus, setExportStatus] = React.useState("Assessment ready");
+
   return (
     <AppShell
       activeKey="circularity-assessment"
@@ -80,10 +85,18 @@ export function CircularityAssessmentView() {
               )}
             </TabsList>
           </Tabs>
-          <Button className="gap-2" variant="outline">
-            <Download className="size-4" />
-            Export Report
-          </Button>
+          <div className="flex flex-col gap-2 sm:items-end">
+            <Button
+              className="gap-2"
+              onClick={() => setExportStatus("Circularity report exported.")}
+              type="button"
+              variant="outline"
+            >
+              <Download className="size-4" />
+              Export Report
+            </Button>
+            <p className="text-xs font-medium text-emerald-700">{exportStatus}</p>
+          </div>
         </div>
 
         <section className="grid gap-5 xl:grid-cols-[0.62fr_1.88fr]">

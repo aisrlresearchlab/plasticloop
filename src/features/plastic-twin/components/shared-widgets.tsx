@@ -241,17 +241,21 @@ export function UploadDropzone({
   title = "Drag and drop files here",
   action = "Choose Files",
   helper,
+  onAction,
 }: {
   title?: string;
   action?: string;
   helper?: string;
+  onAction?: () => void;
 }) {
   return (
     <div className="grid min-h-44 place-items-center rounded-lg border border-dashed border-emerald-300 bg-emerald-50/20 p-6 text-center">
       <div>
         <UploadCloud className="mx-auto size-10 text-emerald-700" />
         <p className="mt-4 text-sm font-medium text-slate-700">{title}</p>
-        <Button className="mt-4">{action}</Button>
+        <Button className="mt-4" onClick={onAction} type="button">
+          {action}
+        </Button>
         {helper ? <p className="mt-3 text-xs text-muted-foreground">{helper}</p> : null}
       </div>
     </div>

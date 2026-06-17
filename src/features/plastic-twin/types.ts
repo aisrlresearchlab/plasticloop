@@ -93,3 +93,27 @@ export interface Recommendation {
   icon: LucideIcon;
   tone: MetricTone;
 }
+
+export interface AiRecognitionResult {
+  plasticType: string;
+  material: string;
+  confidence: number;
+  recyclability: "Low" | "Medium" | "High";
+  estimatedPurity: string;
+  suggestedBin: string;
+  environmentalImpact: string;
+}
+
+export interface AiRecognitionRequest {
+  imageBase64: string;
+  mimeType: string;
+}
+
+export interface ExplainabilityRequest {
+  context: string;
+}
+
+export interface ExplainabilityResult {
+  summary: string;
+  recommendations: string[];
+}

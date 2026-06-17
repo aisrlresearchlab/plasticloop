@@ -1,4 +1,5 @@
 import Link from "next/link";
+import * as React from "react";
 
 import { Brand } from "@/components/layout/brand";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -9,9 +10,14 @@ import { cn } from "@/lib/utils";
 type SidebarProps = {
   activeKey: AppRouteKey;
   className?: string;
+  onNavigate?: () => void;
 };
 
-export function Sidebar({ activeKey, className }: SidebarProps) {
+export const Sidebar = React.memo(function Sidebar({
+  activeKey,
+  className,
+  onNavigate,
+}: SidebarProps) {
   return (
     <aside
       className={cn(
@@ -30,6 +36,7 @@ export function Sidebar({ activeKey, className }: SidebarProps) {
             <div key={item.key}>
               <Link
                 href={item.href}
+                onClick={onNavigate}
                 className={cn(
                   "flex min-h-12 items-center gap-3 rounded-md px-4 py-3 text-sm font-semibold text-emerald-50/90 transition-colors hover:bg-white/10 hover:text-white",
                   isActive &&
@@ -46,6 +53,7 @@ export function Sidebar({ activeKey, className }: SidebarProps) {
                     <Link
                       href={child.href}
                       key={child.href}
+                      onClick={onNavigate}
                       className="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium text-emerald-100/80 hover:bg-white/10 hover:text-white"
                     >
                       <span className="size-1.5 rounded-full bg-emerald-300" />
@@ -74,4 +82,4 @@ export function Sidebar({ activeKey, className }: SidebarProps) {
       </div>
     </aside>
   );
-}
+});

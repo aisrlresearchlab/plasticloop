@@ -1,3 +1,6 @@
+"use client";
+
+import * as React from "react";
 import { CalendarDays, Search } from "lucide-react";
 
 import { AppShell } from "@/components/layout/app-shell";
@@ -23,6 +26,7 @@ import {
   explainabilityReasons,
   shapImpacts,
 } from "@/features/plastic-twin/data/plastic-twin-data";
+import { explainWasteRequest } from "@/features/plastic-twin/services/explain-waste-request";
 import { cn } from "@/lib/utils";
 
 const summaryTrend = [
@@ -40,6 +44,45 @@ const whatIfInsights = [
 ];
 
 export function ExplainableAiView() {
+  const [location, setLocation] = React.useState("overall");
+  const [isAnalyzing, setIsAnalyzing] = React.useState(false);
+  const [aiSummary, setAiSummary] = React.useState(
+    "The predicted increase of 165 kg (+15.3%) in plastic waste is mainly driven by campus events and high cafeteria activity, amplified by low recycling participation and insufficient refill stations. Environmental factors had a minor mitigating effect.",
+  );
+  const [aiRecommendations, setAiRecommendations] = React.useState<string[]>([
+    "Add temporary collection points near event areas.",
+    "Increase recycling participation reminders before peak hours.",
+    "Prepare refill stations around the cafeteria and auditorium.",
+  ]);
+  const [aiError, setAiError] = React.useState<string | null>(null);
+
+  async function handleAnalyze() {
+    setIsAnalyzing(true);
+    setAiError(null);
+
+    try {
+      const response = await explainWasteRequest({
+        context: [
+          `Location: ${location}`,
+          "Predicted waste increased from 1,080 kg to 1,245 kg.",
+          "Top factors: Sports Day, Food Festival, high cafeteria activity, low recycling participation, lack of refill stations.",
+          "Goal: explain this in concise operational language and suggest next actions.",
+        ].join("\n"),
+      });
+
+      setAiSummary(response.summary);
+      setAiRecommendations(response.recommendations);
+    } catch (error) {
+      setAiError(
+        error instanceof Error
+          ? error.message
+          : "Failed to generate explanation with Gemini.",
+      );
+    } finally {
+      setIsAnalyzing(false);
+    }
+  }
+
   return (
     <AppShell
       activeKey="explainable-ai"
@@ -71,7 +114,7 @@ export function ExplainableAiView() {
             </div>
             <div className="mt-4 grid gap-2">
               <label className="text-sm font-semibold">Location (Optional)</label>
-              <Select defaultValue="overall">
+              <Select value={location} onValueChange={setLocation}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -82,10 +125,20 @@ export function ExplainableAiView() {
                 </SelectContent>
               </Select>
             </div>
-            <Button className="mt-5 w-full">
+            <Button
+              className="mt-5 w-full"
+              disabled={isAnalyzing}
+              onClick={handleAnalyze}
+              type="button"
+            >
               <Search className="size-4" />
-              Analyze
+              {isAnalyzing ? "Analyzing..." : "Analyze"}
             </Button>
+            {aiError ? (
+              <p className="mt-3 rounded-md bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+                {aiError}
+              </p>
+            ) : null}
           </PanelCard>
 
           <PanelCard className="border-red-100 bg-red-50/40" title="2. Summary">
@@ -194,13 +247,18 @@ export function ExplainableAiView() {
         <section className="grid gap-5 xl:grid-cols-[1.5fr_0.5fr]">
           <PanelCard title="7. Explanation Summary">
             <p className="text-sm leading-7 text-slate-700">
-              The predicted increase of 165 kg (+15.3%) in plastic waste is
-              mainly driven by <strong className="text-red-700">campus events</strong>{" "}
-              and <strong className="text-red-700">high cafeteria activity</strong>,
-              amplified by <strong className="text-red-700">low recycling participation</strong>{" "}
-              and insufficient refill stations. Environmental factors had a
-              minor mitigating effect.
+              {aiSummary}
             </p>
+            <div className="mt-4 grid gap-2">
+              {aiRecommendations.map((recommendation) => (
+                <div
+                  className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800"
+                  key={recommendation}
+                >
+                  {recommendation}
+                </div>
+              ))}
+            </div>
           </PanelCard>
           <PanelCard title="AI Confidence">
             <div className="flex items-center justify-between text-sm font-semibold">

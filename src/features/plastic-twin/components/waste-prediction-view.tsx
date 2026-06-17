@@ -1,3 +1,6 @@
+"use client";
+
+import * as React from "react";
 import {
   CalendarDays,
   ChevronDown,
@@ -31,7 +34,62 @@ import {
   weeklyPredictionTrend,
 } from "@/features/plastic-twin/data/plastic-twin-data";
 
+const locationBaseWaste: Record<string, number> = {
+  canteen: 1245,
+  dormitory: 980,
+  auditorium: 830,
+};
+
+const activityMultiplier: Record<string, number> = {
+  low: 0.82,
+  medium: 1,
+  high: 1.16,
+};
+
+const weatherMultiplier: Record<string, number> = {
+  sunny: 1,
+  rainy: 0.9,
+  cloudy: 0.96,
+};
+
 export function WastePredictionView() {
+  const [location, setLocation] = React.useState("canteen");
+  const [activityLevel, setActivityLevel] = React.useState("high");
+  const [weather, setWeather] = React.useState("sunny");
+  const [events, setEvents] = React.useState(["Sports Day", "Food Festival"]);
+  const [trendView, setTrendView] = React.useState("daily");
+  const [predictedWaste, setPredictedWaste] = React.useState(1245);
+  const [lastUpdated, setLastUpdated] = React.useState("Ready");
+
+  const averageDailyWaste = Math.round(predictedWaste / 7);
+  const predictionAccuracy =
+    91.2 + (activityLevel === "medium" ? 1.1 : 0) + (weather === "sunny" ? 1 : 0);
+  const eventMultiplier = events.length > 0 ? 1 + events.length * 0.045 : 0.94;
+  const adjustedTrend = weeklyPredictionTrend.map((point, index) => ({
+    ...point,
+    value: Math.round((predictedWaste / 1245) * point.value + index * 3),
+  }));
+
+  function handlePredictWaste() {
+    const nextWaste = Math.round(
+      locationBaseWaste[location] *
+        activityMultiplier[activityLevel] *
+        weatherMultiplier[weather] *
+        eventMultiplier,
+    );
+
+    setPredictedWaste(nextWaste);
+    setLastUpdated("Prediction updated using dummy model");
+  }
+
+  function handleToggleEvent() {
+    setEvents((currentEvents) =>
+      currentEvents.includes("Open Campus")
+        ? currentEvents.filter((event) => event !== "Open Campus")
+        : [...currentEvents, "Open Campus"],
+    );
+  }
+
   return (
     <AppShell
       activeKey="waste-prediction"
@@ -43,7 +101,7 @@ export function WastePredictionView() {
           <PanelCard title="1. Prediction Inputs">
             <div className="grid gap-5">
               <PredictionInput icon={MapPin} label="Location">
-                <Select defaultValue="canteen">
+                <Select value={location} onValueChange={setLocation}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -67,7 +125,7 @@ export function WastePredictionView() {
                 icon={Users}
                 label="Student Activity Level"
               >
-                <Select defaultValue="high">
+                <Select value={activityLevel} onValueChange={setActivityLevel}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -82,17 +140,24 @@ export function WastePredictionView() {
               <PredictionInput icon={CalendarDays} label="Event Schedule">
                 <div className="flex min-h-10 items-center justify-between rounded-md border bg-white px-3">
                   <div className="flex flex-wrap gap-2">
-                    <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium">
-                      Sports Day
-                    </span>
-                    <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium">
-                      Food Festival
-                    </span>
+                    {events.map((event) => (
+                      <span
+                        className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium"
+                        key={event}
+                      >
+                        {event}
+                      </span>
+                    ))}
                   </div>
                   <ChevronDown className="size-4 text-muted-foreground" />
                 </div>
-                <Button className="h-7 px-0 text-xs text-emerald-700" variant="ghost">
-                  + Add Event
+                <Button
+                  className="h-7 px-0 text-xs text-emerald-700"
+                  onClick={handleToggleEvent}
+                  type="button"
+                  variant="ghost"
+                >
+                  {events.includes("Open Campus") ? "- Remove Open Campus" : "+ Add Event"}
                 </Button>
               </PredictionInput>
 
@@ -101,7 +166,7 @@ export function WastePredictionView() {
                 icon={CloudSun}
                 label="Weather Condition"
               >
-                <Select defaultValue="sunny">
+                <Select value={weather} onValueChange={setWeather}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -113,7 +178,7 @@ export function WastePredictionView() {
                 </Select>
               </PredictionInput>
 
-              <Button className="h-11 w-full">
+              <Button className="h-11 w-full" onClick={handlePredictWaste} type="button">
                 Predict Waste
                 <LineChart className="ml-auto size-4" />
               </Button>
@@ -149,28 +214,31 @@ export function WastePredictionView() {
                   Total predicted plastic waste
                 </p>
                 <div className="mt-5 flex items-end gap-2">
-                  <span className="text-5xl font-bold text-emerald-800">1,245</span>
+                  <span className="text-5xl font-bold text-emerald-800">
+                    {predictedWaste.toLocaleString("en-US")}
+                  </span>
                   <span className="pb-1 text-lg font-semibold">kg</span>
                 </div>
                 <p className="mt-2 text-xs font-medium text-muted-foreground">
                   May 13 - May 19, 2024
                 </p>
                 <p className="mt-4 text-xs font-semibold text-emerald-700">
-                  + 18.6% vs previous 7 days
+                  + {Math.max(4, Math.round((predictedWaste / 1245) * 18.6))}% vs previous 7 days
                 </p>
+                <p className="mt-2 text-xs text-muted-foreground">{lastUpdated}</p>
               </div>
 
               <SmallPredictionMetric
                 helper="+ 18.6% vs previous 7 days"
                 label="Average Daily Waste"
                 unit="kg/day"
-                value="178"
+                value={String(averageDailyWaste)}
               />
               <SmallPredictionMetric
                 helper="Model accuracy"
                 label="Prediction Accuracy"
                 unit="%"
-                value="92.3"
+                value={predictionAccuracy.toFixed(1)}
               />
             </div>
           </PanelCard>
@@ -178,7 +246,7 @@ export function WastePredictionView() {
           <div className="grid gap-5 xl:grid-cols-[0.92fr_1.08fr]">
             <PanelCard
               action={
-                <Select defaultValue="daily">
+                <Select value={trendView} onValueChange={setTrendView}>
                   <SelectTrigger className="h-8 w-28">
                     <SelectValue />
                   </SelectTrigger>
@@ -190,7 +258,7 @@ export function WastePredictionView() {
               }
               title="3. Weekly Trend"
             >
-              <AreaTrendChart data={weeklyPredictionTrend} height={280} />
+              <AreaTrendChart data={adjustedTrend} height={280} />
             </PanelCard>
 
             <PanelCard contentClassName="p-0" title="4. High-Risk Locations (May 13 - May 19)">

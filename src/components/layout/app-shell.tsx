@@ -4,8 +4,8 @@ import * as React from "react";
 
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
-import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import type { AppRouteKey } from "@/features/plastic-twin/types";
+import { cn } from "@/lib/utils";
 
 type AppShellProps = {
   activeKey: AppRouteKey;
@@ -25,6 +25,8 @@ export function AppShell({
   children,
 }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
+  const openSidebar = React.useCallback(() => setSidebarOpen(true), []);
+  const closeSidebar = React.useCallback(() => setSidebarOpen(false), []);
 
   return (
     <div className="min-h-dvh bg-[#f6faf8] text-foreground">
@@ -32,17 +34,27 @@ export function AppShell({
         <Sidebar activeKey={activeKey} />
       </div>
 
-      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetContent className="w-72 border-0 bg-[#002f25] p-0" side="left">
-          <SheetTitle className="sr-only">Navigation</SheetTitle>
-          <Sidebar activeKey={activeKey} className="min-h-full" />
-        </SheetContent>
-      </Sheet>
+      <div
+        aria-hidden={!sidebarOpen}
+        className={cn(
+          "fixed inset-0 z-40 bg-slate-950/40 opacity-0 backdrop-blur-sm transition-opacity duration-150 lg:hidden",
+          sidebarOpen ? "pointer-events-auto opacity-100" : "pointer-events-none",
+        )}
+        onClick={closeSidebar}
+      />
+      <div
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 w-72 -translate-x-full transform-gpu transition-transform duration-150 ease-out lg:hidden",
+          sidebarOpen && "translate-x-0",
+        )}
+      >
+        <Sidebar activeKey={activeKey} className="min-h-full" onNavigate={closeSidebar} />
+      </div>
 
       <div className="lg:pl-72">
         <Topbar
           dateLabel={dateLabel}
-          onOpenSidebar={() => setSidebarOpen(true)}
+          onOpenSidebar={openSidebar}
           subtitle={subtitle}
           timeLabel={timeLabel}
           title={title}

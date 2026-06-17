@@ -1,3 +1,6 @@
+"use client";
+
+import * as React from "react";
 import {
   Columns3,
   Download,
@@ -36,6 +39,66 @@ import {
 } from "@/features/plastic-twin/data/plastic-twin-data";
 
 export function DataManagementView() {
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [plasticFilter, setPlasticFilter] = React.useState<string | null>(null);
+  const [activePage, setActivePage] = React.useState(1);
+  const [showSourceColumn, setShowSourceColumn] = React.useState(true);
+  const [statusMessage, setStatusMessage] = React.useState<string | null>(null);
+  const [uploadedDatasets, setUploadedDatasets] = React.useState(datasetFiles);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const plasticTypes = ["PET", "HDPE", "PP", "LDPE", "Others"];
+  const filteredRecords = wasteRecords.filter((record) => {
+    const query = searchQuery.trim().toLowerCase();
+    const matchesQuery =
+      query.length === 0 ||
+      record.id.toLowerCase().includes(query) ||
+      record.location.toLowerCase().includes(query) ||
+      record.plasticType.toLowerCase().includes(query) ||
+      record.uploadedBy.toLowerCase().includes(query);
+    const matchesPlasticType =
+      plasticFilter === null || record.plasticType === plasticFilter;
+
+    return matchesQuery && matchesPlasticType;
+  });
+  const paginatedRecords = filteredRecords.slice((activePage - 1) * 4, activePage * 4);
+  const totalPages = Math.max(Math.ceil(filteredRecords.length / 4), 1);
+
+  function cyclePlasticFilter() {
+    setActivePage(1);
+    setPlasticFilter((currentFilter) => {
+      if (currentFilter === null) {
+        return plasticTypes[0];
+      }
+
+      const currentIndex = plasticTypes.indexOf(currentFilter);
+      return currentIndex === plasticTypes.length - 1
+        ? null
+        : plasticTypes[currentIndex + 1];
+    });
+  }
+
+  function handleDatasetUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    setUploadedDatasets((currentFiles) => [
+      {
+        name: file.name,
+        meta: `${(file.size / 1024 / 1024).toFixed(1)} MB - Uploaded: Just now`,
+        badge: "New",
+        tone: "green",
+        icon: Download,
+      },
+      ...currentFiles,
+    ]);
+    setStatusMessage(`${file.name} added to dummy dataset list.`);
+    event.target.value = "";
+  }
+
   return (
     <AppShell
       activeKey="data-management"
@@ -76,13 +139,26 @@ export function DataManagementView() {
               <div className="flex flex-wrap gap-2">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input className="h-9 w-48 pl-9" placeholder="Search records..." />
+                  <Input
+                    className="h-9 w-48 pl-9"
+                    onChange={(event) => {
+                      setSearchQuery(event.target.value);
+                      setActivePage(1);
+                    }}
+                    placeholder="Search records..."
+                    value={searchQuery}
+                  />
                 </div>
-                <Button className="h-9" variant="outline">
+                <Button className="h-9" onClick={cyclePlasticFilter} type="button" variant="outline">
                   <Filter className="size-4" />
-                  Filter
+                  {plasticFilter ?? "Filter"}
                 </Button>
-                <Button className="h-9" variant="outline">
+                <Button
+                  className="h-9"
+                  onClick={() => setShowSourceColumn((value) => !value)}
+                  type="button"
+                  variant="outline"
+                >
                   <Columns3 className="size-4" />
                   Columns
                 </Button>
@@ -93,7 +169,7 @@ export function DataManagementView() {
             <p className="mb-4 text-sm text-muted-foreground">
               Latest waste collection and measurement records
             </p>
-            {wasteRecords.length === 0 ? (
+            {filteredRecords.length === 0 ? (
               <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
                 No waste records found.
               </div>
@@ -106,27 +182,37 @@ export function DataManagementView() {
                     <TableHead>Location</TableHead>
                     <TableHead>Plastic Type</TableHead>
                     <TableHead>Weight (kg)</TableHead>
-                    <TableHead>Source</TableHead>
+                    {showSourceColumn ? <TableHead>Source</TableHead> : null}
                     <TableHead>Uploaded By</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {wasteRecords.map((record) => (
+                  {paginatedRecords.map((record) => (
                     <TableRow key={record.id}>
                       <TableCell className="font-semibold">{record.id}</TableCell>
                       <TableCell>{record.dateTime}</TableCell>
                       <TableCell>{record.location}</TableCell>
                       <TableCell>{record.plasticType}</TableCell>
                       <TableCell>{record.weightKg.toFixed(2)}</TableCell>
-                      <TableCell>{record.source}</TableCell>
+                      {showSourceColumn ? <TableCell>{record.source}</TableCell> : null}
                       <TableCell>{record.uploadedBy}</TableCell>
                       <TableCell>
                         <div className="flex items-center">
-                          <Button size="icon" variant="ghost">
+                          <Button
+                            onClick={() => setStatusMessage(`Viewing ${record.id}`)}
+                            size="icon"
+                            type="button"
+                            variant="ghost"
+                          >
                             <Eye className="size-4" />
                           </Button>
-                          <Button size="icon" variant="ghost">
+                          <Button
+                            onClick={() => setStatusMessage(`Actions opened for ${record.id}`)}
+                            size="icon"
+                            type="button"
+                            variant="ghost"
+                          >
                             <MoreVertical className="size-4" />
                           </Button>
                         </div>
@@ -137,13 +223,17 @@ export function DataManagementView() {
               </Table>
             )}
             <div className="mt-4 flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-              <span>Showing 1 to 8 of 12,458 records</span>
+              <span>
+                Showing {paginatedRecords.length} of {filteredRecords.length} records
+              </span>
               <div className="flex items-center gap-2">
-                {[1, 2, 3, 4, 5].map((page) => (
+                {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
                   <Button
                     key={page}
+                    onClick={() => setActivePage(page)}
                     size="sm"
-                    variant={page === 1 ? "default" : "ghost"}
+                    type="button"
+                    variant={page === activePage ? "default" : "ghost"}
                   >
                     {page}
                   </Button>
@@ -160,10 +250,23 @@ export function DataManagementView() {
               <p className="mb-4 text-sm text-muted-foreground">
                 Upload new datasets to the system
               </p>
+              <input
+                accept=".csv,.xlsx,.json"
+                className="hidden"
+                onChange={handleDatasetUpload}
+                ref={fileInputRef}
+                type="file"
+              />
               <UploadDropzone
                 action="Choose Files"
                 helper="Supported formats: CSV, XLSX, JSON. Max file size: 500 MB"
+                onAction={() => fileInputRef.current?.click()}
               />
+              {statusMessage ? (
+                <p className="mt-3 rounded-md bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
+                  {statusMessage}
+                </p>
+              ) : null}
             </PanelCard>
 
             <PanelCard
@@ -174,7 +277,7 @@ export function DataManagementView() {
                 View and manage uploaded datasets
               </p>
               <div className="space-y-4">
-                {datasetFiles.map((file) => (
+                {uploadedDatasets.map((file) => (
                   <div className="flex items-center gap-3" key={file.name}>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-slate-900">
@@ -185,10 +288,20 @@ export function DataManagementView() {
                     <Badge variant={file.tone === "amber" ? "warning" : file.tone === "blue" ? "info" : "success"}>
                       {file.badge}
                     </Badge>
-                    <Button size="icon" variant="ghost">
+                    <Button
+                      onClick={() => setStatusMessage(`${file.name} download simulated.`)}
+                      size="icon"
+                      type="button"
+                      variant="ghost"
+                    >
                       <Download className="size-4" />
                     </Button>
-                    <Button size="icon" variant="ghost">
+                    <Button
+                      onClick={() => setStatusMessage(`${file.name} menu simulated.`)}
+                      size="icon"
+                      type="button"
+                      variant="ghost"
+                    >
                       <MoreVertical className="size-4" />
                     </Button>
                   </div>
@@ -209,21 +322,38 @@ export function DataManagementView() {
                 <p className="mt-2 text-sm text-muted-foreground">
                   Import waste records or other data
                 </p>
-                <Button className="mt-4 w-full">Import CSV</Button>
+                <Button
+                  className="mt-4 w-full"
+                  onClick={() => setStatusMessage("Import CSV simulated with dummy state.")}
+                  type="button"
+                >
+                  Import CSV
+                </Button>
               </Card>
               <Card className="p-4">
                 <p className="font-semibold text-slate-900">Export CSV</p>
                 <p className="mt-2 text-sm text-muted-foreground">
                   Export filtered data or reports
                 </p>
-                <Button className="mt-4 w-full">Export CSV</Button>
+                <Button
+                  className="mt-4 w-full"
+                  onClick={() => setStatusMessage("Export CSV simulated with filtered records.")}
+                  type="button"
+                >
+                  Export CSV
+                </Button>
               </Card>
             </div>
             <div className="mt-5 border-t pt-4">
               <p className="font-semibold text-slate-900">Recent Exports</p>
               <div className="mt-3 flex items-center justify-between gap-3 text-sm">
                 <span>waste_records_may_18_2024.csv</span>
-                <Button size="icon" variant="ghost">
+                <Button
+                  onClick={() => setStatusMessage("Recent export download simulated.")}
+                  size="icon"
+                  type="button"
+                  variant="ghost"
+                >
                   <Download className="size-4" />
                 </Button>
               </div>
