@@ -61,6 +61,21 @@ const scoreInterpretations = [
 
 export function CircularityAssessmentView() {
   const [exportStatus, setExportStatus] = React.useState("Assessment ready");
+  const [trendRange, setTrendRange] = React.useState("6 Months");
+  const [showAllLocations, setShowAllLocations] = React.useState(false);
+  const visibleLocationScores = showAllLocations
+    ? circularityLocationScores
+    : circularityLocationScores.slice(0, 5);
+
+  function cycleTrendRange() {
+    setTrendRange((currentRange) =>
+      currentRange === "6 Months"
+        ? "12 Months"
+        : currentRange === "12 Months"
+          ? "Quarterly"
+          : "6 Months",
+    );
+  }
 
   return (
     <AppShell
@@ -140,7 +155,17 @@ export function CircularityAssessmentView() {
           </PanelCard>
 
           <PanelCard
-            action={<Button className="h-8" size="sm" variant="outline">6 Months</Button>}
+            action={
+              <Button
+                className="h-8"
+                onClick={cycleTrendRange}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
+                {trendRange}
+              </Button>
+            }
             title="Trend Over Time"
           >
             <MultiLineTrendChart data={monthlyCircularityTrend} height={300} />
@@ -167,9 +192,14 @@ export function CircularityAssessmentView() {
 
         <section className="grid gap-5 xl:grid-cols-[0.85fr_0.8fr_0.65fr]">
           <PanelCard title="Performance by Location">
-            <HorizontalBars items={circularityLocationScores} />
-            <Button className="mt-4 h-8 px-0 text-emerald-700" variant="ghost">
-              View All Locations
+            <HorizontalBars items={visibleLocationScores} />
+            <Button
+              className="mt-4 h-8 px-0 text-emerald-700"
+              onClick={() => setShowAllLocations((value) => !value)}
+              type="button"
+              variant="ghost"
+            >
+              {showAllLocations ? "Show Fewer Locations" : "View All Locations"}
             </Button>
           </PanelCard>
 
@@ -188,10 +218,10 @@ export function CircularityAssessmentView() {
           <PanelCard title="Recent Assessments">
             <div className="space-y-4">
               {[
-                ["May 12, 2024", "Circularity Score: 72/100", "+ 8 pts"],
-                ["Apr 12, 2024", "Circularity Score: 64/100", "+ 6 pts"],
-                ["Mar 12, 2024", "Circularity Score: 58/100", "+ 5 pts"],
-                ["Feb 12, 2024", "Circularity Score: 53/100", "+ 4 pts"],
+                ["June 17, 2026", "Circularity Score: 72/100", "+ 8 pts"],
+                ["May 17, 2026", "Circularity Score: 64/100", "+ 6 pts"],
+                ["April 17, 2026", "Circularity Score: 58/100", "+ 5 pts"],
+                ["March 17, 2026", "Circularity Score: 53/100", "+ 4 pts"],
               ].map(([date, score, change]) => (
                 <div className="flex items-center gap-3 border-b pb-3 last:border-b-0 last:pb-0" key={date}>
                   <IconBubble className="size-9" icon={CalendarDays} />

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import * as React from "react";
 import { ChevronDown } from "lucide-react";
 
@@ -92,9 +93,11 @@ export function DashboardOverviewView() {
 
           <PanelCard
             action={
-              <Button className="h-8 gap-2" size="sm" variant="outline">
-                3D View
-                <ChevronDown className="size-4" />
+              <Button asChild className="h-8 gap-2" size="sm" variant="outline">
+                <Link href="/digital-twin">
+                  3D View
+                  <ChevronDown className="size-4" />
+                </Link>
               </Button>
             }
             contentClassName="p-0"
@@ -158,7 +161,7 @@ export function DashboardOverviewView() {
               {[
                 ["Active Sensors", "42", "38 online"],
                 ["Collection Points", "16", "4 high volume"],
-                ["AI Confidence", "93.6%", "Latest scan"],
+                ["Gemini Status", "Ready", "Latest scan"],
               ].map(([label, value, helper]) => (
                 <div className="rounded-lg border bg-slate-50 p-4" key={label}>
                   <p className="text-sm font-semibold text-slate-700">{label}</p>

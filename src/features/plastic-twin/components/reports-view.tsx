@@ -17,7 +17,7 @@ import {
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AreaTrendChart,
   BarComparisonChart,
@@ -76,29 +76,91 @@ const reportSummary: StatMetric[] = [
   },
 ];
 
+const reportTabs = [
+  {
+    value: "overview",
+    label: "Overview",
+    description: "Showing the generated sustainability report preview.",
+  },
+  {
+    value: "custom-report",
+    label: "Custom Report",
+    description: "Custom report builder is ready with the selected date range.",
+  },
+  {
+    value: "scheduled-reports",
+    label: "Scheduled Reports",
+    description: "Monthly report schedule is active for the sustainability team.",
+  },
+  {
+    value: "report-history",
+    label: "Report History",
+    description: "Recent report history is loaded with dummy campus data.",
+  },
+];
+
 export function ReportsView() {
+  const [activeTab, setActiveTab] = React.useState(reportTabs[0].value);
   const [reportStatus, setReportStatus] = React.useState("Ready to generate");
+  const activeReportTab =
+    reportTabs.find((tab) => tab.value === activeTab) ?? reportTabs[0];
+
+  function downloadTextFile(filename: string, content: string, type: string) {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function handleDownloadPdf() {
+    downloadTextFile(
+      "sustainability-report.txt",
+      "PlasticTwin-Campus Sustainability Report\nTotal Plastic Waste: 2,845 kg\nRecycling Rate: 58.4%",
+      "text/plain",
+    );
+    setReportStatus("PDF-style report downloaded as a dummy text file.");
+  }
+
+  function handleExportExcel() {
+    downloadTextFile(
+      "sustainability-report.csv",
+      "Metric,Value\nTotal Plastic Waste,2845 kg\nRecycling Rate,58.4%\nCO2 Reduction,1.24 ton\nCircularity Score,72/100",
+      "text/csv",
+    );
+    setReportStatus("Excel-compatible CSV export downloaded.");
+  }
 
   return (
     <AppShell
       activeKey="reports"
-      dateLabel="Apr 28 - May 12, 2024"
+      dateLabel="June 3 - June 17, 2026"
       subtitle="Generate and download sustainability reports for your campus."
       title="Reports"
     >
       <div className="grid gap-5">
-        <Tabs defaultValue="overview">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="h-auto flex-wrap justify-start bg-transparent p-0">
-            {["Overview", "Custom Report", "Scheduled Reports", "Report History"].map((tab) => (
+            {reportTabs.map((tab) => (
               <TabsTrigger
                 className="rounded-none border-b-2 border-transparent bg-transparent px-4 py-3 data-[state=active]:border-emerald-700 data-[state=active]:bg-transparent data-[state=active]:text-emerald-800 data-[state=active]:shadow-none"
-                key={tab}
-                value={tab.toLowerCase().replaceAll(" ", "-")}
+                key={tab.value}
+                value={tab.value}
               >
-                {tab}
+                {tab.label}
               </TabsTrigger>
             ))}
           </TabsList>
+          {reportTabs.map((tab) => (
+            <TabsContent className="mt-3" key={tab.value} value={tab.value}>
+              <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800">
+                {tab.description}
+              </p>
+            </TabsContent>
+          ))}
         </Tabs>
 
         <Card className="p-5">
@@ -114,15 +176,15 @@ export function ReportsView() {
                 and circular economy progress.
               </p>
               <div className="mt-8 grid gap-4 text-sm sm:grid-cols-3">
-                <ReportMeta icon={CalendarDays} label="Date Range" value="Apr 28 - May 12, 2024" />
+                <ReportMeta icon={CalendarDays} label="Date Range" value="June 3 - June 17, 2026" />
                 <ReportMeta icon={MapPin} label="Location" value="Campus Overall" />
-                <ReportMeta icon={FileText} label="Generated on" value="May 12, 2024 10:24 AM" />
+                <ReportMeta icon={FileText} label="Generated on" value="June 17, 2026 10:24 AM" />
               </div>
             </div>
             <div className="grid content-center gap-3">
               <Button
                 className="h-12"
-                onClick={() => setReportStatus("PDF report generated with dummy data.")}
+                onClick={handleDownloadPdf}
                 type="button"
               >
                 <Download className="size-5" />
@@ -130,7 +192,7 @@ export function ReportsView() {
               </Button>
               <Button
                 className="h-12"
-                onClick={() => setReportStatus("Excel export prepared with dummy data.")}
+                onClick={handleExportExcel}
                 type="button"
                 variant="outline"
               >
@@ -147,7 +209,7 @@ export function ReportsView() {
                 Send to Admin
               </Button>
               <p className="rounded-md bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
-                {reportStatus}
+                {activeReportTab.label}: {reportStatus}
               </p>
             </div>
           </div>
@@ -170,7 +232,7 @@ export function ReportsView() {
               height={250}
             />
             <div className="mt-4 rounded-lg bg-emerald-50 p-3 text-xs text-emerald-800">
-              Total waste increased by 12.6% compared to Apr 14 - Apr 27, 2024.
+              Total waste increased by 12.6% compared to May 20 - June 2, 2026.
             </div>
           </PanelCard>
 

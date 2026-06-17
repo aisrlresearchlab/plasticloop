@@ -16,7 +16,6 @@ import {
   GraduationCap,
   LayoutDashboard,
   Leaf,
-  LineChart,
   Map,
   MapPin,
   Megaphone,
@@ -26,7 +25,6 @@ import {
   Search,
   Settings,
   Shield,
-  Sparkles,
   Target,
   Trash2,
   Truck,
@@ -172,13 +170,13 @@ export const dashboardStats: StatMetric[] = [
 ];
 
 export const wasteTrend: TrendPoint[] = [
-  { label: "May 6", value: 300 },
-  { label: "May 7", value: 620 },
-  { label: "May 8", value: 710 },
-  { label: "May 9", value: 540 },
-  { label: "May 10", value: 670 },
-  { label: "May 11", value: 610 },
-  { label: "May 12", value: 820 },
+  { label: "Jun 11", value: 300 },
+  { label: "Jun 12", value: 620 },
+  { label: "Jun 13", value: 710 },
+  { label: "Jun 14", value: 540 },
+  { label: "Jun 15", value: 670 },
+  { label: "Jun 16", value: 610 },
+  { label: "Jun 17", value: 820 },
 ];
 
 export const weeklyPredictionTrend: TrendPoint[] = [
@@ -192,12 +190,12 @@ export const weeklyPredictionTrend: TrendPoint[] = [
 ];
 
 export const monthlyCircularityTrend: TrendPoint[] = [
-  { label: "Dec 2023", value: 58, secondary: 34, tertiary: 11, quaternary: 68 },
-  { label: "Jan 2024", value: 64, secondary: 39, tertiary: 14, quaternary: 69 },
-  { label: "Feb 2024", value: 67, secondary: 48, tertiary: 18, quaternary: 72 },
-  { label: "Mar 2024", value: 72, secondary: 51, tertiary: 17, quaternary: 76 },
-  { label: "Apr 2024", value: 70, secondary: 49, tertiary: 21, quaternary: 73 },
-  { label: "May 2024", value: 68, secondary: 47, tertiary: 18, quaternary: 72 },
+  { label: "Jan 2026", value: 58, secondary: 34, tertiary: 11, quaternary: 68 },
+  { label: "Feb 2026", value: 64, secondary: 39, tertiary: 14, quaternary: 69 },
+  { label: "Mar 2026", value: 67, secondary: 48, tertiary: 18, quaternary: 72 },
+  { label: "Apr 2026", value: 72, secondary: 51, tertiary: 17, quaternary: 76 },
+  { label: "May 2026", value: 70, secondary: 49, tertiary: 21, quaternary: 73 },
+  { label: "Jun 2026", value: 68, secondary: 47, tertiary: 18, quaternary: 72 },
 ];
 
 export const simulationTrend: TrendPoint[] = [
@@ -212,28 +210,28 @@ export const simulationTrend: TrendPoint[] = [
 ];
 
 export const reportPerformanceTrend: TrendPoint[] = [
-  { label: "Apr 28", value: 680, secondary: 62 },
-  { label: "Apr 29", value: 720, secondary: 67 },
-  { label: "Apr 30", value: 830, secondary: 66 },
-  { label: "May 1", value: 910, secondary: 73 },
-  { label: "May 2", value: 470, secondary: 70 },
-  { label: "May 3", value: 850, secondary: 67 },
-  { label: "May 4", value: 900, secondary: 72 },
-  { label: "May 5", value: 620, secondary: 74 },
-  { label: "May 6", value: 720, secondary: 71 },
-  { label: "May 7", value: 820, secondary: 69 },
-  { label: "May 8", value: 860, secondary: 79 },
-  { label: "May 9", value: 850, secondary: 73 },
-  { label: "May 10", value: 790, secondary: 71 },
-  { label: "May 12", value: 700, secondary: 74 },
+  { label: "Jun 3", value: 680, secondary: 62 },
+  { label: "Jun 4", value: 720, secondary: 67 },
+  { label: "Jun 5", value: 830, secondary: 66 },
+  { label: "Jun 6", value: 910, secondary: 73 },
+  { label: "Jun 7", value: 470, secondary: 70 },
+  { label: "Jun 8", value: 850, secondary: 67 },
+  { label: "Jun 9", value: 900, secondary: 72 },
+  { label: "Jun 10", value: 620, secondary: 74 },
+  { label: "Jun 11", value: 720, secondary: 71 },
+  { label: "Jun 12", value: 820, secondary: 69 },
+  { label: "Jun 13", value: 860, secondary: 79 },
+  { label: "Jun 14", value: 850, secondary: 73 },
+  { label: "Jun 15", value: 790, secondary: 71 },
+  { label: "Jun 17", value: 700, secondary: 74 },
 ];
 
 export const circularityScoreTrend: TrendPoint[] = [
-  { label: "Apr 14", value: 62 },
-  { label: "Apr 21", value: 66 },
-  { label: "Apr 28", value: 67 },
-  { label: "May 5", value: 72 },
-  { label: "May 12", value: 72 },
+  { label: "May 20", value: 62 },
+  { label: "May 27", value: 66 },
+  { label: "Jun 3", value: 67 },
+  { label: "Jun 10", value: 72 },
+  { label: "Jun 17", value: 72 },
 ];
 
 export const locationWasteSegments: DonutSegment[] = [
@@ -280,7 +278,7 @@ export const recentActivity: ActivityItem[] = [
   },
   {
     title: "AI recognition completed",
-    description: "Plastic type: PP (Confidence: 93.6%)",
+    description: "Gemini analysis result saved to recent scans",
     time: "10:15 AM",
     tone: "green",
     icon: Brain,
@@ -407,29 +405,29 @@ export const campusLocations: MapLocation[] = [
 export const aiRecentScans = [
   {
     name: "PET Bottle",
-    score: "94.8%",
-    date: "May 12, 2024",
+    score: "Gemini result",
+    date: "June 17, 2026",
     time: "10:24 AM",
     tone: "green" as const,
   },
   {
     name: "PP Cup",
-    score: "92.1%",
-    date: "May 12, 2024",
+    score: "Gemini result",
+    date: "June 17, 2026",
     time: "10:15 AM",
     tone: "blue" as const,
   },
   {
     name: "Snack Wrapper",
-    score: "86.3%",
-    date: "May 12, 2024",
+    score: "Gemini result",
+    date: "June 17, 2026",
     time: "09:58 AM",
     tone: "amber" as const,
   },
   {
     name: "Straw (PP)",
-    score: "90.7%",
-    date: "May 12, 2024",
+    score: "Gemini result",
+    date: "June 17, 2026",
     time: "09:45 AM",
     tone: "slate" as const,
   },
@@ -612,7 +610,7 @@ export const dataManagementStats: StatMetric[] = [
 export const wasteRecords: WasteRecord[] = [
   {
     id: "WR-12458",
-    dateTime: "May 18, 2024 09:15 AM",
+    dateTime: "June 17, 2026 09:15 AM",
     location: "Cafeteria Area",
     plasticType: "PET",
     weightKg: 12.45,
@@ -621,7 +619,7 @@ export const wasteRecords: WasteRecord[] = [
   },
   {
     id: "WR-12457",
-    dateTime: "May 18, 2024 08:45 AM",
+    dateTime: "June 17, 2026 08:45 AM",
     location: "Library",
     plasticType: "HDPE",
     weightKg: 7.3,
@@ -630,7 +628,7 @@ export const wasteRecords: WasteRecord[] = [
   },
   {
     id: "WR-12456",
-    dateTime: "May 18, 2024 08:30 AM",
+    dateTime: "June 17, 2026 08:30 AM",
     location: "Engineering Bldg.",
     plasticType: "PP",
     weightKg: 5.2,
@@ -639,7 +637,7 @@ export const wasteRecords: WasteRecord[] = [
   },
   {
     id: "WR-12455",
-    dateTime: "May 17, 2024 05:10 PM",
+    dateTime: "June 16, 2026 05:10 PM",
     location: "Sports Complex",
     plasticType: "LDPE",
     weightKg: 3.8,
@@ -648,7 +646,7 @@ export const wasteRecords: WasteRecord[] = [
   },
   {
     id: "WR-12454",
-    dateTime: "May 17, 2024 04:45 PM",
+    dateTime: "June 16, 2026 04:45 PM",
     location: "Dormitory Area",
     plasticType: "PET",
     weightKg: 6.1,
@@ -657,7 +655,7 @@ export const wasteRecords: WasteRecord[] = [
   },
   {
     id: "WR-12453",
-    dateTime: "May 17, 2024 03:20 PM",
+    dateTime: "June 16, 2026 03:20 PM",
     location: "Auditorium",
     plasticType: "Others",
     weightKg: 2.15,
@@ -666,7 +664,7 @@ export const wasteRecords: WasteRecord[] = [
   },
   {
     id: "WR-12452",
-    dateTime: "May 17, 2024 02:05 PM",
+    dateTime: "June 16, 2026 02:05 PM",
     location: "Faculty of Science",
     plasticType: "HDPE",
     weightKg: 4.75,
@@ -675,7 +673,7 @@ export const wasteRecords: WasteRecord[] = [
   },
   {
     id: "WR-12451",
-    dateTime: "May 17, 2024 01:30 PM",
+    dateTime: "June 16, 2026 01:30 PM",
     location: "Canteen Area",
     plasticType: "PP",
     weightKg: 9.6,
@@ -686,29 +684,29 @@ export const wasteRecords: WasteRecord[] = [
 
 export const datasetFiles = [
   {
-    name: "unsrat_waste_dataset_2024.csv",
-    meta: "2.4 MB - Uploaded: May 17, 2024",
+    name: "unsrat_waste_dataset_2026.csv",
+    meta: "2.4 MB - Uploaded: June 17, 2026",
     badge: "Training",
     tone: "purple" as const,
     icon: Download,
   },
   {
     name: "campus_survey_data.xlsx",
-    meta: "1.1 MB - Uploaded: May 16, 2024",
+    meta: "1.1 MB - Uploaded: June 16, 2026",
     badge: "Survey",
     tone: "blue" as const,
     icon: Download,
   },
   {
-    name: "sensor_readings_may.csv",
-    meta: "5.6 MB - Uploaded: May 15, 2024",
+    name: "sensor_readings_june.csv",
+    meta: "5.6 MB - Uploaded: June 15, 2026",
     badge: "Sensor",
     tone: "green" as const,
     icon: Download,
   },
   {
-    name: "event_calendar_2024.csv",
-    meta: "0.8 MB - Uploaded: May 14, 2024",
+    name: "event_calendar_2026.csv",
+    meta: "0.8 MB - Uploaded: June 14, 2026",
     badge: "Event",
     tone: "amber" as const,
     icon: Download,
@@ -758,19 +756,6 @@ export const loginFeatures = [
     description: "Measure, evaluate, and improve campus sustainability.",
     icon: Recycle,
   },
-];
-
-export const recognitionDetails = [
-  { label: "Plastic Type", value: "PET Bottle", icon: PackageCheck, tone: "blue" as const },
-  {
-    label: "Material",
-    value: "Polyethylene Terephthalate",
-    icon: Archive,
-    tone: "purple" as const,
-  },
-  { label: "Confidence", value: "94.8%", icon: LineChart, tone: "green" as const },
-  { label: "Recyclability", value: "High", icon: Recycle, tone: "green" as const },
-  { label: "Estimated Purity", value: "Clean", icon: Sparkles, tone: "green" as const },
 ];
 
 export const explainabilityReasons = [

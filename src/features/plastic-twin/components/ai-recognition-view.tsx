@@ -28,17 +28,6 @@ import { recognizePlasticRequest } from "@/features/plastic-twin/services/recogn
 import type { AiRecognitionResult } from "@/features/plastic-twin/types";
 import { cn } from "@/lib/utils";
 
-const fallbackResult: AiRecognitionResult = {
-  plasticType: "PET Bottle",
-  material: "Polyethylene Terephthalate",
-  confidence: 94.8,
-  recyclability: "High",
-  estimatedPurity: "Clean",
-  suggestedBin: "Recyclable Plastic",
-  environmentalImpact:
-    "Recycling this PET bottle helps reduce CO2 emissions and supports a circular economy.",
-};
-
 function readFileAsBase64(file: File): Promise<{
   imageBase64: string;
   dataUrl: string;
@@ -67,7 +56,7 @@ export function AiRecognitionView() {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const cameraInputRef = React.useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
-  const [result, setResult] = React.useState<AiRecognitionResult>(fallbackResult);
+  const [result, setResult] = React.useState<AiRecognitionResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [successMessage, setSuccessMessage] = React.useState<string | null>(null);
@@ -75,45 +64,61 @@ export function AiRecognitionView() {
   const [lastSource, setLastSource] = React.useState<"upload" | "camera" | null>(
     null,
   );
+  const [showAllScans, setShowAllScans] = React.useState(false);
 
-  const confidence = Number.isFinite(result.confidence)
+  const confidence = result && Number.isFinite(result.confidence)
     ? Math.round(result.confidence * 10) / 10
-    : 0;
+    : null;
+  const visibleScans = showAllScans
+    ? [
+        ...aiRecentScans,
+        ...aiRecentScans.map((scan) => ({
+          ...scan,
+          date: "June 16, 2026",
+          time: "09:15 AM",
+        })),
+      ]
+    : aiRecentScans;
 
-  const details = [
-    {
-      label: "Plastic Type",
-      value: result.plasticType,
-      icon: PackageCheck,
-      tone: "blue" as const,
-    },
-    {
-      label: "Material",
-      value: result.material,
-      icon: Archive,
-      tone: "purple" as const,
-    },
-    {
-      label: "Confidence",
-      value: `${confidence}%`,
-      icon: LineChart,
-      tone: "green" as const,
-    },
-    {
-      label: "Recyclability",
-      value: result.recyclability,
-      icon: Recycle,
-      tone: "green" as const,
-    },
-    {
-      label: "Estimated Purity",
-      value: result.estimatedPurity,
-      icon: Sparkles,
-      tone: "green" as const,
-    },
-  ];
+  const details = result
+    ? [
+        {
+          label: "Plastic Type",
+          value: result.plasticType,
+          icon: PackageCheck,
+          tone: "blue" as const,
+        },
+        {
+          label: "Material",
+          value: result.material,
+          icon: Archive,
+          tone: "purple" as const,
+        },
+        {
+          label: "Confidence",
+          value: `${confidence}%`,
+          icon: LineChart,
+          tone: "green" as const,
+        },
+        {
+          label: "Recyclability",
+          value: result.recyclability,
+          icon: Recycle,
+          tone: "green" as const,
+        },
+        {
+          label: "Estimated Purity",
+          value: result.estimatedPurity,
+          icon: Sparkles,
+          tone: "green" as const,
+        },
+      ]
+    : [];
 
   async function handleImageFile(file: File, source: "upload" | "camera") {
+    setResult(null);
+    setPreviewUrl(null);
+
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
       setErrorMessage("Format gambar harus JPG, PNG, atau WebP.");
       setSuccessMessage(null);
@@ -283,12 +288,21 @@ export function AiRecognitionView() {
             </PanelCard>
 
             <PanelCard
-              action={<Button className="h-8 px-2 text-xs text-emerald-700" variant="ghost">View All</Button>}
+              action={
+                <Button
+                  className="h-8 px-2 text-xs text-emerald-700"
+                  onClick={() => setShowAllScans((value) => !value)}
+                  type="button"
+                  variant="ghost"
+                >
+                  {showAllScans ? "Show Less" : "View All"}
+                </Button>
+              }
               title="Recent Scans"
             >
               <div className="grid gap-3 sm:grid-cols-4">
-                {aiRecentScans.map((scan, index) => (
-                  <Card className="overflow-hidden" key={scan.name}>
+                {visibleScans.map((scan, index) => (
+                  <Card className="overflow-hidden" key={`${scan.name}-${index}`}>
                     <div
                       className={cn(
                         "h-24",
@@ -328,74 +342,108 @@ export function AiRecognitionView() {
                   width={720}
                 />
                 <Badge className="absolute bottom-8 left-1/2 -translate-x-1/2" variant="success">
-                  Gemini Analysis
+                  {isAnalyzing ? "Analyzing with Gemini" : result ? "Gemini Analysis" : "Image Ready"}
                 </Badge>
               </div>
             ) : (
               <BottleVisual />
             )}
-            <div className="mt-8 text-center">
-              <h2 className="text-4xl font-bold tracking-normal text-slate-950">
-                {result.plasticType}
-              </h2>
-              <p className="mt-2 text-lg font-medium text-slate-700">
-                ({result.material})
-              </p>
-              <div className="mx-auto mt-6 max-w-sm rounded-lg border border-emerald-100 bg-emerald-50/60 p-6">
-                <p className="text-5xl font-bold text-emerald-700">{confidence}%</p>
-                <p className="mt-2 text-base font-medium text-slate-700">
-                  Confidence Score
+            {result ? (
+              <div className="mt-8 text-center">
+                <h2 className="text-4xl font-bold tracking-normal text-slate-950">
+                  {result.plasticType}
+                </h2>
+                <p className="mt-2 text-lg font-medium text-slate-700">
+                  ({result.material})
+                </p>
+                <div className="mx-auto mt-6 max-w-sm rounded-lg border border-emerald-100 bg-emerald-50/60 p-6">
+                  <p className="text-5xl font-bold text-emerald-700">
+                    {confidence}%
+                  </p>
+                  <p className="mt-2 text-base font-medium text-slate-700">
+                    Confidence Score
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-8 rounded-lg border border-dashed bg-slate-50 p-6 text-center">
+                <p className="text-lg font-bold text-slate-900">
+                  {isAnalyzing ? "Analyzing image with Gemini..." : "No AI result yet"}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  Upload or capture an image first. Plastic type, material,
+                  confidence score, recyclability, and purity will appear only
+                  after Gemini returns the analysis.
                 </p>
               </div>
-            </div>
+            )}
           </PanelCard>
 
           <div className="grid content-start gap-5">
             <PanelCard title="Prediction Details">
-              <div className="space-y-5">
-                {details.map((detail) => (
-                  <div className="flex items-center gap-4" key={detail.label}>
-                    <IconBubble icon={detail.icon} tone={detail.tone} />
-                    <div>
-                      <p className="text-sm text-muted-foreground">{detail.label}</p>
-                      <p className="font-bold text-slate-900">{detail.value}</p>
+              {result ? (
+                <div className="space-y-5">
+                  {details.map((detail) => (
+                    <div className="flex items-center gap-4" key={detail.label}>
+                      <IconBubble icon={detail.icon} tone={detail.tone} />
+                      <div>
+                        <p className="text-sm text-muted-foreground">{detail.label}</p>
+                        <p className="font-bold text-slate-900">{detail.value}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed bg-slate-50 p-5 text-sm leading-6 text-muted-foreground">
+                  Prediction details are generated by Gemini after image
+                  analysis. No score is shown before AI data is available.
+                </div>
+              )}
             </PanelCard>
 
             <PanelCard title="Suggested Bin">
-              <div className="flex items-center gap-5">
-                <div className="grid size-32 shrink-0 place-items-center rounded-lg bg-emerald-700 text-white shadow-sm">
-                  <Recycle className="size-16" />
+              {result ? (
+                <div className="flex items-center gap-5">
+                  <div className="grid size-32 shrink-0 place-items-center rounded-lg bg-emerald-700 text-white shadow-sm">
+                    <Recycle className="size-16" />
+                  </div>
+                  <div>
+                    <p className="text-xl font-bold text-emerald-700">
+                      {result.suggestedBin}
+                    </p>
+                    <p className="mt-3 text-sm leading-6 text-slate-700">
+                      Please dispose of this item in the {result.suggestedBin} bin.
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xl font-bold text-emerald-700">
-                    {result.suggestedBin}
-                  </p>
-                  <p className="mt-3 text-sm leading-6 text-slate-700">
-                    Please dispose of this item in the {result.suggestedBin} bin.
-                  </p>
+              ) : (
+                <div className="rounded-lg border border-dashed bg-slate-50 p-5 text-sm leading-6 text-muted-foreground">
+                  Suggested bin will be shown after Gemini classifies the item.
                 </div>
-              </div>
+              )}
             </PanelCard>
 
             <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-5">
-              <div className="flex items-start gap-4">
-                <IconBubble icon={Recycle} tone="green" />
-                <div>
-                  <p className="text-lg font-bold text-emerald-800">
-                    Environmental Impact
-                  </p>
-                  <p className="mt-3 text-sm leading-7 text-slate-700">
-                    {result.environmentalImpact}
-                  </p>
-                  <Badge className="mt-4" variant="success">
-                    High value recyclable
-                  </Badge>
+              {result ? (
+                <div className="flex items-start gap-4">
+                  <IconBubble icon={Recycle} tone="green" />
+                  <div>
+                    <p className="text-lg font-bold text-emerald-800">
+                      Environmental Impact
+                    </p>
+                    <p className="mt-3 text-sm leading-7 text-slate-700">
+                      {result.environmentalImpact}
+                    </p>
+                    <Badge className="mt-4" variant="success">
+                      {result.recyclability} recyclability
+                    </Badge>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="text-sm leading-6 text-emerald-900">
+                  Environmental impact will be generated from Gemini analysis.
+                </div>
+              )}
             </div>
           </div>
         </section>

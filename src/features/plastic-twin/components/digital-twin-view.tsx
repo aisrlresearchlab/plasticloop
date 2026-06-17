@@ -1,3 +1,6 @@
+"use client";
+
+import * as React from "react";
 import { BarChart3, Clock, Recycle, Trash2 } from "lucide-react";
 
 import { AppShell } from "@/components/layout/app-shell";
@@ -21,19 +24,45 @@ const digitalTwinMetrics = [
   { label: "Circularity Score", value: "72 /100", helper: "+ 5.8 pts", icon: Clock },
 ];
 
+const viewModeLabels: Record<string, string> = {
+  waste: "Waste Overview layer is active.",
+  flow: "Waste Flow layer is active.",
+  hotspots: "Hotspot analysis layer is active.",
+};
+
+const timePresets = [
+  { label: "Real-time", time: "10:30", progress: 60 },
+  { label: "Morning", time: "08:00", progress: 32 },
+  { label: "Afternoon", time: "13:00", progress: 68 },
+  { label: "Evening", time: "18:00", progress: 82 },
+  { label: "Night", time: "22:00", progress: 94 },
+];
+
 export function DigitalTwinView() {
+  const [viewMode, setViewMode] = React.useState("waste");
+  const [compareTime, setCompareTime] = React.useState(false);
+  const [activePreset, setActivePreset] = React.useState(timePresets[0]);
+  const activePresetIndex = timePresets.findIndex(
+    (preset) => preset.label === activePreset.label,
+  );
+
+  function advanceTimePreset() {
+    const nextPreset = timePresets[(activePresetIndex + 1) % timePresets.length];
+    setActivePreset(nextPreset);
+  }
+
   return (
     <AppShell
       activeKey="digital-twin"
       subtitle="Interactive 3D visualization of UNSRAT campus for plastic waste monitoring and management."
-      timeLabel="10:30 AM"
+      timeLabel={`${activePreset.time} ${compareTime ? "Compare" : "Live"}`}
       title="Campus Digital Twin"
     >
       <div className="grid gap-5">
         <section className="grid gap-4 xl:grid-cols-[240px_1fr_190px]">
           <Card className="p-4">
             <p className="mb-2 text-xs font-medium text-muted-foreground">View Mode</p>
-            <Select defaultValue="waste">
+            <Select value={viewMode} onValueChange={setViewMode}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -43,6 +72,9 @@ export function DigitalTwinView() {
                 <SelectItem value="hotspots">Hotspots</SelectItem>
               </SelectContent>
             </Select>
+            <p className="mt-3 text-xs font-medium text-emerald-700">
+              {viewModeLabels[viewMode]}
+            </p>
           </Card>
 
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -70,9 +102,14 @@ export function DigitalTwinView() {
             })}
           </div>
 
-          <Button className="h-full min-h-16" variant="outline">
+          <Button
+            className="h-full min-h-16"
+            onClick={() => setCompareTime((value) => !value)}
+            type="button"
+            variant={compareTime ? "default" : "outline"}
+          >
             <BarChart3 className="size-5" />
-            Compare Time
+            {compareTime ? "Live View" : "Compare Time"}
           </Button>
         </section>
 
@@ -88,15 +125,18 @@ export function DigitalTwinView() {
                 </p>
               </div>
               <span className="rounded-md bg-emerald-700 px-3 py-1 text-sm font-bold text-white">
-                10:30
+                {activePreset.time}
               </span>
             </div>
             <div className="mt-5 flex items-center gap-4">
-              <Button size="icon">
+              <Button onClick={advanceTimePreset} size="icon" type="button">
                 <Clock className="size-4" />
               </Button>
               <div className="h-2 flex-1 rounded-full bg-slate-200">
-                <div className="relative h-2 w-3/5 rounded-full bg-emerald-700">
+                <div
+                  className="relative h-2 rounded-full bg-emerald-700"
+                  style={{ width: `${activePreset.progress}%` }}
+                >
                   <span className="absolute right-0 top-1/2 size-5 -translate-y-1/2 rounded-full border-4 border-white bg-emerald-700 shadow" />
                 </div>
               </div>
@@ -108,10 +148,17 @@ export function DigitalTwinView() {
             <div className="mt-4 grid grid-cols-2 gap-2">
               {["Real-time", "Morning", "Afternoon", "Evening", "Night"].map((item) => (
                 <Button
-                  className={cn(item !== "Real-time" && "bg-white")}
+                  className={cn(item !== activePreset.label && "bg-white")}
                   key={item}
+                  onClick={() =>
+                    setActivePreset(
+                      timePresets.find((preset) => preset.label === item) ??
+                        timePresets[0],
+                    )
+                  }
                   size="sm"
-                  variant={item === "Real-time" ? "default" : "outline"}
+                  type="button"
+                  variant={item === activePreset.label ? "default" : "outline"}
                 >
                   {item}
                 </Button>

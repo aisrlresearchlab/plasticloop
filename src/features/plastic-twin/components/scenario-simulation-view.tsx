@@ -41,6 +41,7 @@ export function ScenarioSimulationView() {
     defaultSelectedScenarios,
   );
   const [simulationRun, setSimulationRun] = React.useState(1);
+  const [reportStatus, setReportStatus] = React.useState<string | null>(null);
 
   const selectedCount = Math.max(selectedScenarios.length, 1);
   const wasteReduction = 14 + selectedCount * 2.65 + simulationRun * 0.6;
@@ -221,13 +222,20 @@ export function ScenarioSimulationView() {
 
         <TipBar
           action={
-            <Button className="h-8 text-emerald-700" variant="ghost">
+            <Button
+              className="h-8 text-emerald-700"
+              onClick={() =>
+                setReportStatus("Scenario report prepared with current simulation data.")
+              }
+              type="button"
+              variant="ghost"
+            >
               Download Report
             </Button>
           }
         >
-          Tip: Try different scenario combinations to find the most effective
-          strategy for your campus.
+          {reportStatus ??
+            "Tip: Try different scenario combinations to find the most effective strategy for your campus."}
         </TipBar>
       </div>
     </AppShell>

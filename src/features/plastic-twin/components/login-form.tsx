@@ -1,66 +1,29 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import * as React from "react";
 import {
   ArrowRight,
   Eye,
   EyeOff,
-  GraduationCap,
   Lock,
   Mail,
-  Recycle,
-  ShieldCheck,
   Sprout,
-  Trash2,
-  Users,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { cn } from "@/lib/utils";
-
-const roleOptions = [
-  {
-    value: "student",
-    label: "Student",
-    description: "Access campus data and report waste",
-    icon: GraduationCap,
-  },
-  {
-    value: "admin",
-    label: "Admin",
-    description: "Manage system, users, and configurations",
-    icon: ShieldCheck,
-  },
-  {
-    value: "officer",
-    label: "Waste Management Officer",
-    description: "Manage waste data and operations",
-    icon: Trash2,
-  },
-  {
-    value: "researcher",
-    label: "Researcher",
-    description: "Access data for research and analysis",
-    icon: Recycle,
-  },
-];
 
 export function LoginForm() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = React.useState(false);
-  const [role, setRole] = React.useState("student");
-  const selectedRole =
-    roleOptions.find((roleOption) => roleOption.value === role) ?? roleOptions[0];
+  const [statusMessage, setStatusMessage] = React.useState("");
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setStatusMessage("Login successful. Redirecting to dashboard...");
+    router.push("/dashboard");
   }
 
   return (
@@ -90,6 +53,7 @@ export function LoginForm() {
               className="h-12 pl-12"
               id="email"
               placeholder="Enter your email address"
+              required
               type="email"
             />
           </div>
@@ -105,6 +69,7 @@ export function LoginForm() {
               className="h-12 pl-12 pr-12"
               id="password"
               placeholder="Enter your password"
+              required
               type={showPassword ? "text" : "password"}
             />
             <button
@@ -118,55 +83,15 @@ export function LoginForm() {
           </div>
         </div>
 
-        <div className="grid gap-2">
-          <label className="text-sm font-semibold text-slate-800">Role</label>
-          <Select value={role} onValueChange={setRole}>
-            <SelectTrigger className="h-12 border-emerald-400">
-              <div className="flex items-center gap-3">
-                <Users className="size-5 text-muted-foreground" />
-                <SelectValue placeholder="Select your role">
-                  {selectedRole.label}
-                </SelectValue>
-              </div>
-            </SelectTrigger>
-            <SelectContent className="w-[var(--radix-select-trigger-width)] p-0">
-              {roleOptions.map((roleOption) => {
-                const Icon = roleOption.icon;
-                const selected = roleOption.value === role;
-
-                return (
-                  <SelectItem
-                    className={cn(
-                      "rounded-none py-3 pl-3 pr-4 focus:bg-emerald-50",
-                      selected && "bg-emerald-50",
-                    )}
-                    key={roleOption.value}
-                    value={roleOption.value}
-                  >
-                    <span className="flex items-center gap-3">
-                      <span className="grid size-10 place-items-center rounded-full bg-emerald-50 text-emerald-700">
-                        <Icon className="size-5" />
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block text-sm font-bold text-slate-900">
-                          {roleOption.label}
-                        </span>
-                        <span className="block whitespace-normal text-xs text-muted-foreground">
-                          {roleOption.description}
-                        </span>
-                      </span>
-                    </span>
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
-        </div>
-
         <Button className="h-12 w-full text-base" type="submit">
           Login
           <ArrowRight className="ml-auto size-5" />
         </Button>
+        {statusMessage ? (
+          <p className="rounded-md bg-emerald-50 px-3 py-2 text-center text-xs font-medium text-emerald-700">
+            {statusMessage}
+          </p>
+        ) : null}
 
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <span className="h-px flex-1 bg-border" />
@@ -176,9 +101,9 @@ export function LoginForm() {
 
         <p className="text-center text-sm font-medium text-slate-700">
           Don&apos;t have an account?{" "}
-          <a className="font-bold text-emerald-700" href="/dashboard">
+          <Link className="font-bold text-emerald-700" href="/sign-up">
             Register here
-          </a>
+          </Link>
         </p>
       </div>
     </form>

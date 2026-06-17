@@ -117,6 +117,8 @@ export function MapcnCampusMap({ locations, variant }: MapcnCampusMapProps) {
     collection: true,
     recycling: true,
   });
+  const [zoomLevel, setZoomLevel] = React.useState(100);
+  const [mapMessage, setMapMessage] = React.useState<string | null>(null);
 
   const positionedLocations = React.useMemo<PositionedLocation[]>(
     () =>
@@ -146,36 +148,76 @@ export function MapcnCampusMap({ locations, variant }: MapcnCampusMapProps) {
       collection: true,
       recycling: true,
     });
+    setMapMessage("All map layers are visible.");
   }
 
   return (
     <div className="relative h-full min-h-[inherit] overflow-hidden bg-[#dff0e6]">
-      <CampusBaseMap variant={variant} />
+      <div
+        className="absolute inset-0 origin-center transition-transform duration-200"
+        style={{ transform: `scale(${zoomLevel / 100})` }}
+      >
+        <CampusBaseMap variant={variant} />
 
-      {layers.buildings ? <BuildingLayer variant={variant} /> : null}
-      {layers.flow ? <WasteFlowLayer variant={variant} /> : null}
-      {layers.hotspots || layers.collection || layers.recycling ? (
-        <LocationLayer
-          layers={layers}
-          locations={positionedLocations}
-          onSelect={setSelectedLocationId}
-          selectedLocationId={selectedLocation?.id}
-          variant={variant}
-        />
-      ) : null}
+        {layers.buildings ? <BuildingLayer variant={variant} /> : null}
+        {layers.flow ? <WasteFlowLayer variant={variant} /> : null}
+        {layers.hotspots || layers.collection || layers.recycling ? (
+          <LocationLayer
+            layers={layers}
+            locations={positionedLocations}
+            onSelect={(locationId) => {
+              setSelectedLocationId(locationId);
+              setMapMessage(
+                `${locations.find((location) => location.id === locationId)?.name ?? "Location"} selected.`,
+              );
+            }}
+            selectedLocationId={selectedLocation?.id}
+            variant={variant}
+          />
+        ) : null}
+      </div>
 
       <div className="absolute right-3 top-3 z-20 flex gap-2">
-        <Button className="h-9 bg-white/95 text-slate-800 hover:bg-white" size="sm" variant="outline">
+        <Button
+          className="h-9 bg-white/95 text-slate-800 hover:bg-white"
+          onClick={() =>
+            setMapMessage(
+              variant === "dashboard"
+                ? "3D campus view is available on the Digital Twin page."
+                : "Compare time mode enabled for this map preview.",
+            )
+          }
+          size="sm"
+          type="button"
+          variant="outline"
+        >
           <Maximize2 className="size-4" />
           {variant === "dashboard" ? "3D View" : "Compare Time"}
         </Button>
       </div>
 
+      {mapMessage ? (
+        <div
+          className={cn(
+            "absolute left-4 z-30 max-w-72 rounded-md bg-white/95 px-3 py-2 text-xs font-medium text-emerald-800 shadow-sm",
+            variant === "digital-twin" ? "top-64" : "top-4",
+          )}
+        >
+          {mapMessage}
+        </div>
+      ) : null}
+
       {variant === "digital-twin" ? (
         <DigitalTwinControls
           layers={layers}
+          onAdvanceSimulation={() =>
+            setMapMessage("Map time simulation advanced by one step.")
+          }
           onReset={resetLayers}
           onToggle={toggleLayer}
+          onViewDetails={() =>
+            setMapMessage(`${selectedLocation?.name ?? "Location"} details opened.`)
+          }
           selectedLocation={selectedLocation}
         />
       ) : null}
@@ -194,13 +236,35 @@ export function MapcnCampusMap({ locations, variant }: MapcnCampusMapProps) {
       ) : null}
 
       <div className="absolute bottom-4 right-4 z-20 grid overflow-hidden rounded-lg border bg-white shadow-sm">
-        <Button className="rounded-none border-0" size="icon" variant="ghost">
+        <Button
+          className="rounded-none border-0"
+          onClick={() => setZoomLevel((value) => Math.min(value + 10, 130))}
+          size="icon"
+          type="button"
+          variant="ghost"
+        >
           +
         </Button>
-        <Button className="rounded-none border-0" size="icon" variant="ghost">
+        <Button
+          className="rounded-none border-0"
+          onClick={() => setZoomLevel((value) => Math.max(value - 10, 80))}
+          size="icon"
+          type="button"
+          variant="ghost"
+        >
           -
         </Button>
-        <Button className="rounded-none border-0" size="icon" variant="ghost">
+        <Button
+          className="rounded-none border-0"
+          onClick={() => {
+            setZoomLevel(100);
+            setSelectedLocationId(locations[0]?.id ?? "");
+            setMapMessage("Map centered to the first campus location.");
+          }}
+          size="icon"
+          type="button"
+          variant="ghost"
+        >
           <LocateFixed className="size-4" />
         </Button>
       </div>
@@ -400,13 +464,17 @@ function LocationLayer({
 
 function DigitalTwinControls({
   layers,
+  onAdvanceSimulation,
   onReset,
   onToggle,
+  onViewDetails,
   selectedLocation,
 }: {
   layers: Record<MapLayerKey, boolean>;
+  onAdvanceSimulation: () => void;
   onReset: () => void;
   onToggle: (layer: MapLayerKey) => void;
+  onViewDetails: () => void;
   selectedLocation?: PositionedLocation;
 }) {
   return (
@@ -453,7 +521,13 @@ function DigitalTwinControls({
             <p>Dominant type: PET (48%)</p>
             <p>Recycling rate: {selectedLocation.recyclingRate ?? 0}%</p>
           </div>
-          <Button className="mt-3 w-full" size="sm" variant="outline">
+          <Button
+            className="mt-3 w-full"
+            onClick={onViewDetails}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
             <Eye className="size-4" />
             View Details
           </Button>
@@ -496,7 +570,7 @@ function DigitalTwinControls({
           <Badge variant="success">10:30</Badge>
         </div>
         <div className="mt-4 flex items-center gap-4">
-          <Button size="icon">
+          <Button onClick={onAdvanceSimulation} size="icon" type="button">
             <SlidersHorizontal className="size-4" />
           </Button>
           <div className="h-2 flex-1 rounded-full bg-slate-200">

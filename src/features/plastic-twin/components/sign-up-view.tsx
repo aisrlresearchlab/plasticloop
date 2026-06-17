@@ -1,10 +1,10 @@
 import { AuthLayout } from "@/features/plastic-twin/components/auth-layout";
-import { LoginForm } from "@/features/plastic-twin/components/login-form";
+import { SignUpForm } from "@/features/plastic-twin/components/sign-up-form";
 
-export function LoginView() {
+export function SignUpView() {
   return (
     <AuthLayout>
-      <LoginForm />
+      <SignUpForm />
     </AuthLayout>
   );
 }

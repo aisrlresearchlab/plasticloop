@@ -1,12 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import * as React from "react";
 import { CalendarDays, Search } from "lucide-react";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -30,10 +30,10 @@ import { explainWasteRequest } from "@/features/plastic-twin/services/explain-wa
 import { cn } from "@/lib/utils";
 
 const summaryTrend = [
-  { label: "May 5", value: 1080 },
-  { label: "May 7", value: 1120 },
-  { label: "May 9", value: 1188 },
-  { label: "May 12", value: 1245 },
+  { label: "Jun 10", value: 1080 },
+  { label: "Jun 12", value: 1120 },
+  { label: "Jun 15", value: 1188 },
+  { label: "Jun 17", value: 1245 },
 ];
 
 const whatIfInsights = [
@@ -43,8 +43,13 @@ const whatIfInsights = [
   ["Reduce cafeteria plastic packaging by 20%", "-31.7 kg"],
 ];
 
+const analysisDateOptions = ["June 17, 2026", "June 16, 2026", "June 15, 2026"];
+const baselineDateOptions = ["June 10, 2026", "June 3, 2026", "May 27, 2026"];
+
 export function ExplainableAiView() {
   const [location, setLocation] = React.useState("overall");
+  const [predictionDate, setPredictionDate] = React.useState(analysisDateOptions[0]);
+  const [baselineDate, setBaselineDate] = React.useState(baselineDateOptions[0]);
   const [isAnalyzing, setIsAnalyzing] = React.useState(false);
   const [aiSummary, setAiSummary] = React.useState(
     "The predicted increase of 165 kg (+15.3%) in plastic waste is mainly driven by campus events and high cafeteria activity, amplified by low recycling participation and insufficient refill stations. Environmental factors had a minor mitigating effect.",
@@ -55,6 +60,7 @@ export function ExplainableAiView() {
     "Prepare refill stations around the cafeteria and auditorium.",
   ]);
   const [aiError, setAiError] = React.useState<string | null>(null);
+  const [infoMessage, setInfoMessage] = React.useState<string | null>(null);
 
   async function handleAnalyze() {
     setIsAnalyzing(true);
@@ -64,6 +70,8 @@ export function ExplainableAiView() {
       const response = await explainWasteRequest({
         context: [
           `Location: ${location}`,
+          `Prediction date: ${predictionDate}`,
+          `Baseline date: ${baselineDate}`,
           "Predicted waste increased from 1,080 kg to 1,245 kg.",
           "Top factors: Sports Day, Food Festival, high cafeteria activity, low recycling participation, lack of refill stations.",
           "Goal: explain this in concise operational language and suggest next actions.",
@@ -109,8 +117,18 @@ export function ExplainableAiView() {
         <section className="grid gap-5 xl:grid-cols-[0.72fr_1.28fr]">
           <PanelCard title="1. Select Analysis">
             <div className="grid gap-4 sm:grid-cols-2">
-              <DateField label="Prediction Date" value="May 12, 2024" />
-              <DateField label="Comparison Date (Baseline)" value="May 5, 2024" />
+              <DateField
+                label="Prediction Date"
+                onValueChange={setPredictionDate}
+                options={analysisDateOptions}
+                value={predictionDate}
+              />
+              <DateField
+                label="Comparison Date (Baseline)"
+                onValueChange={setBaselineDate}
+                options={baselineDateOptions}
+                value={baselineDate}
+              />
             </div>
             <div className="mt-4 grid gap-2">
               <label className="text-sm font-semibold">Location (Optional)</label>
@@ -221,9 +239,14 @@ export function ExplainableAiView() {
                   </div>
                 ))}
               </div>
-              <Button className="mt-5 w-full" variant="outline">
-                Explore Scenarios
+              <Button asChild className="mt-5 w-full" variant="outline">
+                <Link href="/scenario-simulation">Explore Scenarios</Link>
               </Button>
+              {infoMessage ? (
+                <p className="mt-3 rounded-md bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
+                  {infoMessage}
+                </p>
+              ) : null}
             </PanelCard>
 
             <PanelCard title="6. Model Information">
@@ -231,7 +254,7 @@ export function ExplainableAiView() {
                 {[
                   ["Model Used", "XGBoost Regressor"],
                   ["Explainer", "SHAP (TreeExplainer)"],
-                  ["Data Period", "Apr 28 - May 12, 2024"],
+                  ["Data Period", "June 3 - June 17, 2026"],
                   ["Prediction Horizon", "7 Days"],
                 ].map(([label, value]) => (
                   <div className="flex justify-between gap-3" key={label}>
@@ -273,7 +296,14 @@ export function ExplainableAiView() {
 
         <TipBar
           action={
-            <Button className="h-8 text-emerald-700" variant="ghost">
+            <Button
+              className="h-8 text-emerald-700"
+              onClick={() =>
+                setInfoMessage("SHAP explanation guide opened in this dummy workflow.")
+              }
+              type="button"
+              variant="ghost"
+            >
               Learn more about SHAP
             </Button>
           }
@@ -286,13 +316,34 @@ export function ExplainableAiView() {
   );
 }
 
-function DateField({ label, value }: { label: string; value: string }) {
+function DateField({
+  label,
+  value,
+  options,
+  onValueChange,
+}: {
+  label: string;
+  value: string;
+  options: string[];
+  onValueChange: (value: string) => void;
+}) {
   return (
     <div className="grid gap-2">
       <label className="text-sm font-semibold">{label}</label>
       <div className="relative">
-        <Input readOnly value={value} />
-        <CalendarDays className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Select value={value} onValueChange={onValueChange}>
+          <SelectTrigger className="pr-10">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {options.map((option) => (
+              <SelectItem key={option} value={option}>
+                {option}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <CalendarDays className="pointer-events-none absolute right-9 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
       </div>
     </div>
   );

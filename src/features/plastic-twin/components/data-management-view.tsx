@@ -42,9 +42,13 @@ export function DataManagementView() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [plasticFilter, setPlasticFilter] = React.useState<string | null>(null);
   const [activePage, setActivePage] = React.useState(1);
+  const [recordsPerPage, setRecordsPerPage] = React.useState(4);
   const [showSourceColumn, setShowSourceColumn] = React.useState(true);
   const [statusMessage, setStatusMessage] = React.useState<string | null>(null);
   const [uploadedDatasets, setUploadedDatasets] = React.useState(datasetFiles);
+  const [showAllDatasets, setShowAllDatasets] = React.useState(false);
+  const [showTrainingDetails, setShowTrainingDetails] = React.useState(false);
+  const [showSensorDetails, setShowSensorDetails] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const plasticTypes = ["PET", "HDPE", "PP", "LDPE", "Others"];
@@ -61,8 +65,14 @@ export function DataManagementView() {
 
     return matchesQuery && matchesPlasticType;
   });
-  const paginatedRecords = filteredRecords.slice((activePage - 1) * 4, activePage * 4);
-  const totalPages = Math.max(Math.ceil(filteredRecords.length / 4), 1);
+  const paginatedRecords = filteredRecords.slice(
+    (activePage - 1) * recordsPerPage,
+    activePage * recordsPerPage,
+  );
+  const totalPages = Math.max(Math.ceil(filteredRecords.length / recordsPerPage), 1);
+  const visibleDatasets = showAllDatasets
+    ? uploadedDatasets
+    : uploadedDatasets.slice(0, 3);
 
   function cyclePlasticFilter() {
     setActivePage(1);
@@ -76,6 +86,13 @@ export function DataManagementView() {
         ? null
         : plasticTypes[currentIndex + 1];
     });
+  }
+
+  function cycleRecordsPerPage() {
+    setActivePage(1);
+    setRecordsPerPage((currentSize) =>
+      currentSize === 4 ? 8 : currentSize === 8 ? 12 : 4,
+    );
   }
 
   function handleDatasetUpload(event: React.ChangeEvent<HTMLInputElement>) {
@@ -102,7 +119,7 @@ export function DataManagementView() {
   return (
     <AppShell
       activeKey="data-management"
-      dateLabel="May 12, 2024 - May 18, 2024"
+      dateLabel="June 11, 2026 - June 17, 2026"
       subtitle="Manage waste data, datasets, and system integrations"
       title="Data Management"
     >
@@ -238,8 +255,13 @@ export function DataManagementView() {
                     {page}
                   </Button>
                 ))}
-                <Button size="sm" variant="outline">
-                  8 / page
+                <Button
+                  onClick={cycleRecordsPerPage}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
+                  {recordsPerPage} / page
                 </Button>
               </div>
             </div>
@@ -270,14 +292,23 @@ export function DataManagementView() {
             </PanelCard>
 
             <PanelCard
-              action={<Button className="h-8 px-0 text-emerald-700" variant="ghost">View All</Button>}
+              action={
+                <Button
+                  className="h-8 px-0 text-emerald-700"
+                  onClick={() => setShowAllDatasets((value) => !value)}
+                  type="button"
+                  variant="ghost"
+                >
+                  {showAllDatasets ? "Show Less" : "View All"}
+                </Button>
+              }
               title="Dataset Management"
             >
               <p className="mb-4 text-sm text-muted-foreground">
                 View and manage uploaded datasets
               </p>
               <div className="space-y-4">
-                {uploadedDatasets.map((file) => (
+                {visibleDatasets.map((file) => (
                   <div className="flex items-center gap-3" key={file.name}>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-slate-900">
@@ -347,7 +378,7 @@ export function DataManagementView() {
             <div className="mt-5 border-t pt-4">
               <p className="font-semibold text-slate-900">Recent Exports</p>
               <div className="mt-3 flex items-center justify-between gap-3 text-sm">
-                <span>waste_records_may_18_2024.csv</span>
+                <span>waste_records_june_17_2026.csv</span>
                 <Button
                   onClick={() => setStatusMessage("Recent export download simulated.")}
                   size="icon"
@@ -361,7 +392,19 @@ export function DataManagementView() {
           </PanelCard>
 
           <PanelCard
-            action={<Button className="h-8 px-0 text-emerald-700" variant="ghost">View All</Button>}
+            action={
+              <Button
+                className="h-8 px-0 text-emerald-700"
+                onClick={() => {
+                  setShowTrainingDetails((value) => !value);
+                  setStatusMessage("Training dataset details toggled.");
+                }}
+                type="button"
+                variant="ghost"
+              >
+                {showTrainingDetails ? "Hide" : "View All"}
+              </Button>
+            }
             title="AI Model Training Datasets"
           >
             <p className="mb-4 text-sm text-muted-foreground">
@@ -374,15 +417,37 @@ export function DataManagementView() {
               height={220}
             />
             <div className="mt-4 flex items-center justify-between gap-3 text-xs text-muted-foreground">
-              <span>Last Updated: May 18, 2024 09:45 AM</span>
-              <Button size="sm" variant="outline">
+              <span>Last Updated: June 17, 2026 09:45 AM</span>
+              <Button
+                onClick={() => setStatusMessage("Training data manager opened.")}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
                 Manage Training Data
               </Button>
             </div>
+            {showTrainingDetails ? (
+              <div className="mt-4 rounded-md bg-slate-50 p-3 text-xs text-slate-700">
+                15 datasets available: 8 verified, 5 processing, and 2 need review.
+              </div>
+            ) : null}
           </PanelCard>
 
           <PanelCard
-            action={<Button className="h-8 px-0 text-emerald-700" variant="ghost">View All</Button>}
+            action={
+              <Button
+                className="h-8 px-0 text-emerald-700"
+                onClick={() => {
+                  setShowSensorDetails((value) => !value);
+                  setStatusMessage("Sensor integration details toggled.");
+                }}
+                type="button"
+                variant="ghost"
+              >
+                {showSensorDetails ? "Hide" : "View All"}
+              </Button>
+            }
             title="Sensor Data Integration"
           >
             <p className="mb-4 text-sm text-muted-foreground">
@@ -401,12 +466,22 @@ export function DataManagementView() {
             <div className="mt-4 flex items-end justify-between gap-3">
               <div className="text-xs text-muted-foreground">
                 <p>Last Data Received</p>
-                <p>May 18, 2024 10:29 AM</p>
+                <p>June 17, 2026 10:29 AM</p>
               </div>
-              <Button size="sm" variant="outline">
+              <Button
+                onClick={() => setStatusMessage("Sensor manager opened.")}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
                 Manage Sensors
               </Button>
             </div>
+            {showSensorDetails ? (
+              <div className="mt-4 rounded-md bg-slate-50 p-3 text-xs text-slate-700">
+                38 sensors online, 2 offline, and 2 scheduled for maintenance.
+              </div>
+            ) : null}
           </PanelCard>
         </section>
 

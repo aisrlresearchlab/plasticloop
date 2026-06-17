@@ -63,7 +63,7 @@ export function AppShell({
           {children}
         </main>
         <footer className="mx-auto flex w-full max-w-[1680px] flex-col items-center gap-2 px-4 pb-4 text-xs text-muted-foreground sm:flex-row sm:justify-center sm:gap-8 sm:px-6">
-          <span>(c) 2024 PlasticTwin-Campus. All rights reserved.</span>
+          <span>(c) 2026 PlasticTwin-Campus. All rights reserved.</span>
           <span className="text-emerald-700">Privacy Policy</span>
           <span className="text-emerald-700">Terms of Use</span>
         </footer>

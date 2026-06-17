@@ -52,15 +52,41 @@ const weatherMultiplier: Record<string, number> = {
   cloudy: 0.96,
 };
 
+const dateRangeOptions = [
+  {
+    value: "jun-18-24",
+    label: "June 18, 2026 - June 24, 2026",
+    shortLabel: "June 18 - June 24, 2026",
+    multiplier: 1,
+  },
+  {
+    value: "jun-25-jul-01",
+    label: "June 25, 2026 - July 1, 2026",
+    shortLabel: "June 25 - July 1, 2026",
+    multiplier: 1.08,
+  },
+  {
+    value: "jul-02-08",
+    label: "July 2, 2026 - July 8, 2026",
+    shortLabel: "July 2 - July 8, 2026",
+    multiplier: 0.94,
+  },
+];
+
 export function WastePredictionView() {
   const [location, setLocation] = React.useState("canteen");
+  const [dateRange, setDateRange] = React.useState(dateRangeOptions[0].value);
   const [activityLevel, setActivityLevel] = React.useState("high");
   const [weather, setWeather] = React.useState("sunny");
   const [events, setEvents] = React.useState(["Sports Day", "Food Festival"]);
   const [trendView, setTrendView] = React.useState("daily");
   const [predictedWaste, setPredictedWaste] = React.useState(1245);
   const [lastUpdated, setLastUpdated] = React.useState("Ready");
+  const [modelMessage, setModelMessage] = React.useState<string | null>(null);
 
+  const selectedDateRange =
+    dateRangeOptions.find((option) => option.value === dateRange) ??
+    dateRangeOptions[0];
   const averageDailyWaste = Math.round(predictedWaste / 7);
   const predictionAccuracy =
     91.2 + (activityLevel === "medium" ? 1.1 : 0) + (weather === "sunny" ? 1 : 0);
@@ -75,11 +101,12 @@ export function WastePredictionView() {
       locationBaseWaste[location] *
         activityMultiplier[activityLevel] *
         weatherMultiplier[weather] *
-        eventMultiplier,
+        eventMultiplier *
+        selectedDateRange.multiplier,
     );
 
     setPredictedWaste(nextWaste);
-    setLastUpdated("Prediction updated using dummy model");
+    setLastUpdated(`Prediction updated for ${selectedDateRange.shortLabel}`);
   }
 
   function handleToggleEvent() {
@@ -114,10 +141,18 @@ export function WastePredictionView() {
               </PredictionInput>
 
               <PredictionInput icon={CalendarDays} label="Date Range">
-                <Button className="w-full justify-between" variant="outline">
-                  May 13, 2024 - May 19, 2024
-                  <CalendarDays className="size-4" />
-                </Button>
+                <Select value={dateRange} onValueChange={setDateRange}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dateRangeOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </PredictionInput>
 
               <PredictionInput
@@ -195,9 +230,21 @@ export function WastePredictionView() {
                   and weather to predict plastic waste generation with high
                   accuracy.
                 </p>
-                <Button className="mt-3 h-8 px-0 text-emerald-700" variant="ghost">
+                <Button
+                  className="mt-3 h-8 px-0 text-emerald-700"
+                  onClick={() =>
+                    setModelMessage("Model details opened for the current dummy forecast.")
+                  }
+                  type="button"
+                  variant="ghost"
+                >
                   Learn more about our model
                 </Button>
+                {modelMessage ? (
+                  <p className="mt-2 text-xs font-medium text-emerald-700">
+                    {modelMessage}
+                  </p>
+                ) : null}
               </div>
             </div>
           </div>
@@ -220,7 +267,7 @@ export function WastePredictionView() {
                   <span className="pb-1 text-lg font-semibold">kg</span>
                 </div>
                 <p className="mt-2 text-xs font-medium text-muted-foreground">
-                  May 13 - May 19, 2024
+                  {selectedDateRange.shortLabel}
                 </p>
                 <p className="mt-4 text-xs font-semibold text-emerald-700">
                   + {Math.max(4, Math.round((predictedWaste / 1245) * 18.6))}% vs previous 7 days
@@ -261,7 +308,10 @@ export function WastePredictionView() {
               <AreaTrendChart data={adjustedTrend} height={280} />
             </PanelCard>
 
-            <PanelCard contentClassName="p-0" title="4. High-Risk Locations (May 13 - May 19)">
+            <PanelCard
+              contentClassName="p-0"
+              title={`4. High-Risk Locations (${selectedDateRange.shortLabel.replace(", 2026", "")})`}
+            >
               <MapView className="min-h-[360px] rounded-none border-0" variant="prediction" />
             </PanelCard>
           </div>
@@ -278,7 +328,14 @@ export function WastePredictionView() {
 
           <TipBar
             action={
-              <Button className="h-8 text-emerald-700" variant="ghost">
+              <Button
+                className="h-8 text-emerald-700"
+                onClick={() =>
+                  setModelMessage("Detailed model diagnostics are ready for review.")
+                }
+                type="button"
+                variant="ghost"
+              >
                 View Model Details
               </Button>
             }

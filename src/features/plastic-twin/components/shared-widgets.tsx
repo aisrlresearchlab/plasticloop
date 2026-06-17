@@ -310,8 +310,8 @@ export function BottleVisual() {
         <div className="absolute left-1/2 top-56 h-8 w-36 -translate-x-1/2 rounded-full border-y-4 border-blue-100/90 bg-white/20" />
         <div className="absolute left-1/2 bottom-8 h-10 w-24 -translate-x-1/2 rounded-b-full bg-blue-300/55" />
       </div>
-      <Badge className="absolute bottom-8 left-1/2 -translate-x-1/2" variant="success">
-        High Confidence
+      <Badge className="absolute bottom-8 left-1/2 -translate-x-1/2" variant="secondary">
+        Awaiting AI Analysis
       </Badge>
     </div>
   );
